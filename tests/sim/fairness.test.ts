@@ -52,7 +52,6 @@ describe('fairness — 10,000 seeded runs (G2 acceptance)', () => {
       }
       expect(failures).toEqual([]);
     },
-    { timeout: 300_000 },
   );
 
   it('difficulty curve stays inside fair bounds deep into a run (score 60)', () => {
