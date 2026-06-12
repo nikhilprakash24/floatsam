@@ -6,6 +6,7 @@ import { scrollSpeedFor } from '../core/spawn/Spawner';
 import { transition } from '../core/state/fsm';
 import { BEST_SCORE_KEY } from '../core/score/score';
 import type { KVStore } from '../platform/Storage';
+import type { SfxSynth } from '../platform/audio';
 import { PlayerView } from '../entities/PlayerView';
 
 const D = difficultyJson;
@@ -24,6 +25,9 @@ export class GameScene extends Phaser.Scene {
   private bubbles!: Phaser.GameObjects.Particles.ParticleEmitter;
   private started = false;
   private overLaunched = false;
+  private sfx!: SfxSynth;
+  private fx: Phaser.GameObjects.GameObject[] = [];
+  private fxChecked = false;
 
   constructor() {
     super('Game');
@@ -38,7 +42,10 @@ export class GameScene extends Phaser.Scene {
     const urlSeed = Number(new URLSearchParams(window.location.search).get('seed'));
     const seed = urlSeed > 0 ? urlSeed : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
     this.sim = new Simulation(physicsJson, D, seed, {
-      onScore: (score) => this.registry.set('score', score),
+      onScore: (score) => {
+        this.registry.set('score', score);
+        this.sfx.score();
+      },
       onDeath: () => this.onDeath(),
       onGameOver: () => this.onGameOver(),
     });
@@ -79,19 +86,67 @@ export class GameScene extends Phaser.Scene {
       .setDepth(20);
     this.tweens.add({ targets: hint, alpha: 0.35, duration: 600, yoyo: true, repeat: -1 });
 
+    this.sfx = this.registry.get('sfx') as SfxSynth;
+
     this.input.on('pointerdown', () => {
+      this.sfx.unlock();
+      this.sfx.startAmbient();
       if (!this.started) {
         this.started = true;
         hint.destroy();
       }
       if (this.sim.phase === 'PLAY') {
         this.sim.tap();
+        this.sfx.tap();
         this.player.pulse(this);
         this.bubbles.emitParticleAt(this.player.sprite.x - 26, this.player.sprite.y, 3);
       }
     });
 
+    this.addEffects();
+    this.bindVisibilityPause();
     this.scene.launch('Hud');
+  }
+
+  /** Caustic light shafts + vignette; cheap, and removed if FPS dips (§8). */
+  private addEffects(): void {
+    if (this.registry.get('fxLow') === true) return;
+    for (const [x, sway, dur] of [
+      [120, 26, 5200],
+      [280, -34, 6800],
+      [400, 22, 6000],
+    ] as const) {
+      const ray = this.add
+        .image(x, 0, 'ray')
+        .setOrigin(0.5, 0)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(7)
+        .setAlpha(0.8);
+      this.tweens.add({
+        targets: ray,
+        x: x + sway,
+        alpha: 0.45,
+        duration: dur,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.fx.push(ray);
+    }
+    this.fx.push(this.add.image(D.worldWidth / 2, D.worldHeight / 2, 'vignette').setDepth(30));
+  }
+
+  private bindVisibilityPause(): void {
+    const onHidden = (): void => {
+      if (this.started && this.sim.phase === 'PLAY' && !this.scene.isPaused()) {
+        this.scene.launch('Pause');
+        this.scene.pause();
+      }
+    };
+    this.game.events.on(Phaser.Core.Events.HIDDEN, onHidden);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off(Phaser.Core.Events.HIDDEN, onHidden);
+    });
   }
 
   override update(_time: number, delta: number): void {
@@ -120,6 +175,16 @@ export class GameScene extends Phaser.Scene {
     const alpha = this.sim.advance(delta);
     const speed = scrollSpeedFor(this.sim.score, D);
 
+    // One-shot FPS probe ~6 s into the run: drop effects on weak devices.
+    if (!this.fxChecked && this.sim.time > 6) {
+      this.fxChecked = true;
+      if (this.game.loop.actualFps < 45 && this.fx.length > 0) {
+        this.registry.set('fxLow', true);
+        for (const o of this.fx) o.destroy();
+        this.fx = [];
+      }
+    }
+
     this.bgFar.tilePositionX += speed * 0.12 * (delta / 1000);
     this.bgMid.tilePositionX += speed * 0.35 * (delta / 1000);
 
@@ -142,6 +207,7 @@ export class GameScene extends Phaser.Scene {
 
   private onDeath(): void {
     this.registry.set('appState', transition('PLAY', 'DEAD'));
+    this.sfx.death();
     this.cameras.main.shake(180, 0.012);
     this.cameras.main.flash(120, 200, 60, 60);
 

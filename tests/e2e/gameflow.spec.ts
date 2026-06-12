@@ -88,21 +88,36 @@ test('full loop: play → die → game over → restart in under a second', asyn
   // Stop tapping: the seal sinks to its death (seabed or gate).
   await expect.poll(async () => (await simState(page))?.phase, { timeout: 30_000 }).toBe('OVER');
 
-  // Tap through the game-over panel (after its input guard) and time the restart.
+  // Tap through the game-over panel (after its input guard) and time the
+  // restart in-page so driver round-trips don't pollute the measurement.
   await page.waitForTimeout(450);
-  const before = Date.now();
-  await tapCanvas(page);
-  await expect
-    .poll(
-      async () => {
-        const s = await simState(page);
-        return s && s.phase === 'PLAY' && s.frame < 100 ? 'restarted' : 'waiting';
-      },
-      { intervals: [50] },
-    )
-    .toBe('restarted');
-  // Generous margin for driver round-trips; the scene restart itself is one frame.
-  expect(Date.now() - before).toBeLessThan(1000);
+  const restartMs = await page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const canvas = document.querySelector('canvas')!;
+        const rect = canvas.getBoundingClientRect();
+        const opts = {
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+          button: 0,
+          bubbles: true,
+        };
+        canvas.dispatchEvent(new MouseEvent('mousedown', opts));
+        canvas.dispatchEvent(new MouseEvent('mouseup', opts));
+        const t0 = performance.now();
+        const iv = window.setInterval(() => {
+          const s = window.__sim as { phase: string; frame: number } | undefined;
+          if (s && s.phase === 'PLAY' && s.frame < 100) {
+            window.clearInterval(iv);
+            resolve(performance.now() - t0);
+          } else if (performance.now() - t0 > 5000) {
+            window.clearInterval(iv);
+            reject(new Error('restart never happened'));
+          }
+        }, 16);
+      }),
+  );
+  expect(restartMs).toBeLessThan(1000);
 });
 
 test('score increments when passing gates (bot-driven)', async ({ page }) => {

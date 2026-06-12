@@ -1,0 +1,18 @@
+{
+  "name": "Underwater Flappy",
+  "short_name": "UWFlappy",
+  "description": "Flappy, but underwater: buoyancy, drag and momentum.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#041e2a",
+  "theme_color": "#062b3a",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

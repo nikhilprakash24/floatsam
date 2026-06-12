@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { transition } from '../core/state/fsm';
 import { LocalStorageStore } from '../platform/Storage';
 import { BEST_SCORE_KEY } from '../core/score/score';
+import { SfxSynth } from '../platform/audio';
 import difficulty from '../config/difficulty.json';
 
 const W = difficulty.worldWidth;
@@ -22,10 +23,12 @@ export class BootScene extends Phaser.Scene {
     this.makeBubble();
     this.makeBackgrounds();
     this.makeDot();
+    this.makeLightAndVignette();
 
     const store = new LocalStorageStore();
     this.registry.set('store', store);
     this.registry.set('best', Number(store.get(BEST_SCORE_KEY) ?? 0));
+    this.registry.set('sfx', new SfxSynth(store));
     this.registry.set('appState', transition('BOOT', 'MENU'));
 
     const params = new URLSearchParams(window.location.search);
@@ -158,6 +161,39 @@ export class BootScene extends Phaser.Scene {
     }
     sand.generateTexture('sand', W, 48);
     sand.destroy();
+  }
+
+  private makeLightAndVignette(): void {
+    // Caustic light shaft: vertical soft beam, additive-blended in-game.
+    const ray = this.textures.createCanvas('ray', 140, H);
+    if (ray) {
+      const ctx = ray.getContext();
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, 'rgba(190,235,255,0.16)');
+      g.addColorStop(0.55, 'rgba(190,235,255,0.05)');
+      g.addColorStop(1, 'rgba(190,235,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(50, 0);
+      ctx.lineTo(90, 0);
+      ctx.lineTo(140, H);
+      ctx.lineTo(0, H);
+      ctx.closePath();
+      ctx.fill();
+      ray.refresh();
+    }
+
+    // Water-tint vignette: darkened corners, clear center.
+    const vig = this.textures.createCanvas('vignette', W, H);
+    if (vig) {
+      const ctx = vig.getContext();
+      const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75);
+      g.addColorStop(0, 'rgba(3,24,33,0)');
+      g.addColorStop(1, 'rgba(3,24,33,0.5)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      vig.refresh();
+    }
   }
 
   private makeDot(): void {

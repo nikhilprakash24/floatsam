@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import difficulty from '../config/difficulty.json';
+import type { SfxSynth } from '../platform/audio';
 
 const W = difficulty.worldWidth;
 const H = difficulty.worldHeight;
@@ -67,6 +68,20 @@ export class MenuScene extends Phaser.Scene {
         color: '#bfdde8',
       })
       .setOrigin(0.5);
+
+    const sfx = this.registry.get('sfx') as SfxSynth;
+    const mute = this.add
+      .text(14, 14, sfx.isMuted() ? '🔇' : '🔊', { fontSize: '24px' })
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true });
+    mute.on(
+      'pointerdown',
+      (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+        e.stopPropagation();
+        sfx.unlock();
+        mute.setText(sfx.toggleMute() ? '🔇' : '🔊');
+      },
+    );
 
     // GameScene.create owns the →PLAY transition.
     this.input.once('pointerdown', () => this.scene.start('Game'));

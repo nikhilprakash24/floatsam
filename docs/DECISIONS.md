@@ -46,3 +46,17 @@ Initial tuning (impulse 420/buoyancy 430 → ~95 px tap arc) failed the fairness
 - Collision precision tests green (circle-vs-rect edges/corners, ~80% hitbox).
 - Best score survives reload via KVStore/localStorage (e2e-verified).
 - 10-min heap soak: deferred to a manual pass alongside the G3 cross-browser matrix (object pooling in place; no allocations in the per-tick hot path beyond small state objects).
+
+## GATE G3 — Phase 3 closed (local scope; cloud/cross-device items deferred)
+**Date:** 2026-06-12 · **Author:** Orchestrator
+
+Done and verified:
+- Juice pass: squash/stretch on tap, screen shake + flash on death, score pop, caustic light shafts (additive, swaying), water-tint vignette. Effects auto-disable via one-shot FPS probe (<45 fps) and stay off via registry flag.
+- Audio: WebAudio-synthesized muffled SFX (tap blub, two-note score chime, death thud) + brown-noise ambient loop, all through a global lowpass; context unlocked on first user gesture (iOS pattern, §8); mute toggle in Menu+HUD persisted via KVStore (e2e-verified across reload).
+- Pause/resume on visibility change (e2e-verified: sim frame frozen while hidden, resumes on tap). Resize/orientation: Scale.FIT + letterbox.
+- Production budget: build = **1.17 MB** total (<3 MB); gzip transfer ≈ 327 KB; budget check wired into CI (`npm run budget`).
+- PWA: manifest + SVG icon + cache-first service worker (network-first navigations); registered in prod builds only.
+- e2e suite: 6/6 green (gameflow 4 + mute persist + visibility pause).
+
+Deferred (need cloud/devices/accounts — not closable from this workstation):
+- Lighthouse ≥90 run, cross-browser matrix (iOS Safari/Firefox), production domain deploy, analytics provider choice (ADR needed when picked), 10-min heap soak on reference hardware. The CI Pages deploy activates on first push to GitHub.

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import difficulty from '../config/difficulty.json';
+import type { SfxSynth } from '../platform/audio';
 
 const FONT = '"Trebuchet MS", sans-serif';
 
@@ -34,6 +35,21 @@ export class HudScene extends Phaser.Scene {
       })
       .setOrigin(1, 0)
       .setDepth(100);
+
+    const sfx = this.registry.get('sfx') as SfxSynth;
+    const mute = this.add
+      .text(14, 14, sfx.isMuted() ? '🔇' : '🔊', { fontSize: '24px' })
+      .setOrigin(0, 0)
+      .setDepth(100)
+      .setInteractive({ useHandCursor: true });
+    mute.on(
+      'pointerdown',
+      (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+        e.stopPropagation();
+        sfx.unlock();
+        mute.setText(sfx.toggleMute() ? '🔇' : '🔊');
+      },
+    );
 
     this.registry.events.on('changedata-score', this.onScore, this);
     this.registry.events.on('changedata-best', this.onBest, this);
