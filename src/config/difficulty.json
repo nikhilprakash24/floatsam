@@ -1,0 +1,21 @@
+{
+  "scrollSpeedBase": 130,
+  "scrollSpeedMax": 210,
+  "speedRampPerPoint": 4,
+  "gapStart": 210,
+  "gapMin": 150,
+  "gapShrinkPerPoint": 2.5,
+  "spawnSpacing": 280,
+  "firstGateX": 620,
+  "gapCenterMinY": 150,
+  "gapCenterMaxY": 570,
+  "maxRisePerSecond": 100,
+  "maxSinkPerSecond": 45,
+  "fairnessSafety": 0.75,
+  "pipeWidth": 70,
+  "deathSlowmoMs": 300,
+  "worldWidth": 480,
+  "worldHeight": 720,
+  "playerX": 140,
+  "playerRadius": 24
+}

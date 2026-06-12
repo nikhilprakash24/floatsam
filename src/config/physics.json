@@ -1,0 +1,13 @@
+{
+  "gravity": 600,
+  "buoyancyAccel": 400,
+  "dragCoefficient": 0.014,
+  "swimImpulse": 330,
+  "swimBlendSteps": 3,
+  "maxRiseSpeed": 420,
+  "maxSinkSpeed": 240,
+  "rotationLerp": 0.12,
+  "maxTiltDeg": 32,
+  "playerHitboxScale": 0.8,
+  "fixedStep": 0.016666666666666666
+}
