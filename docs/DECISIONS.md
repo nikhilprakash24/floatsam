@@ -60,3 +60,30 @@ Done and verified:
 
 Deferred (need cloud/devices/accounts — not closable from this workstation):
 - Lighthouse ≥90 run, cross-browser matrix (iOS Safari/Firefox), production domain deploy, analytics provider choice (ADR needed when picked), 10-min heap soak on reference hardware. The CI Pages deploy activates on first push to GitHub.
+
+---
+
+## ADR-005 — Accept ARCHITECTURE v3.3 consolidation; ratify ADR-001..004
+**Date:** 2026-06-13 · **Author:** Orchestrator
+
+v3.3 ("Floatsam") read in full alongside HANDOFF.md. It consolidates the three-mode design (Classic ✅ / Dive / Currents Lab) and the character system (Seal baseline, Otter) into one spec. Accepted as the directing document for Phases 5–8. Shipped ADRs 001–004 are ratified and carry forward unchanged. Binding constraints reaffirmed: `core/` zero Phaser imports; all tunables in JSON; fixed 1/60 s + seeded RNG with determinism keyed per (seed, mode, character); FluidBody the only integrator; Classic(Seal) tuning-locked (change ⇒ ADR + 10k re-sweep). Execution begins at Phase 6 (owner-independent); Phase 5 items as the owner unblocks; Phase 7 overlaps once BiAxialPolicy lands.
+
+## ADR-006 — `massScale` amendment to the mass≡1 convention
+**Date:** 2026-06-13 · **Author:** Physics
+
+ADR-003 fixed mass ≡ 1 so tuning JSON reads as accelerations. v3.3 §3.2/§3.4 adds a per-character `massScale`: the integrator computes continuous-force acceleration as `a = (gravity + buoyancy + field + drag) / massScale`. Decisions for the amendment:
+- **Only continuous forces are divided by massScale.** The swim/thrust impulse is a *velocity delta* (Δv), applied directly and scaled by `thrustScale`, NOT by `1/massScale`. Rationale: the spec deliberately separates "flap power" (`thrustScale`, the Otter's is weaker at 0.72) from inertial response (`massScale`); routing impulse through mass would couple them and contradict "thrustScale scales swimImpulse" (§3.2). 
+- **Bit-identical safety:** for the Seal, `massScale = 1.0`; since `X / 1.0 === X` exactly in IEEE754, inserting the divisor cannot change any Seal result. Likewise effective drag/buoyancy/impulse are `base * 1.0`, exact. The two P6 bit-identical gates are therefore mathematically guaranteed, not merely measured.
+- Per-character effective constants are produced by a single pure `deriveEffective(base, character)` and logged to PHYSICS_SPEC.md by script — never hand-maintained (§3.2).
+
+## ADR-007 — Product name "Floatsam" — PROPOSED, left OPEN
+**Date:** 2026-06-13 · **Author:** Orchestrator · **Status:** OPEN (owner decision §7.6)
+
+v3.3 proposes "Floatsam" (alts: Glub, Deepling). Recorded as proposed only. Per §10.1 the repo/package/bundle-id are **not** renamed: codename `flappySeal`, package `underwater-flappy` stay until the owner ratifies a name and clears trademark + domain + store-search. No rename work happens before that. Blocks G8 only.
+
+## ADR-008 — Seal effective hitbox is 19.2 px (not the spec's implied 24), forced by the bit-identical gate
+**Date:** 2026-06-13 · **Author:** Physics + QA
+
+v3.3 §3.2 says `hitboxRadius` "replaces fixed r=24 / 80% rule" and §4.2 gives Seal "r 24" / Otter "hitboxRadius 19 (~21% smaller threat circle)". But the **shipped** collision radius is `playerRadius(24) × playerHitboxScale(0.8) = 19.2` — the spec omitted the 0.8. Because the bit-identical gate and "shipped code wins for locked Classic" (v3.3 intro + §8 risk #1) are non-negotiable, we honor **intent over literal numbers**:
+- `seal.json hitboxRadius = 19.2` (the true shipped effective value) — preserves bit-identity.
+- `otter.json hitboxRadius = 15.2` (≈21% smaller than the Seal's *actual* 19.2), preserving the spec's stated "~21% smaller threat circle" compensating-buff intent — rather than the literal 19, which would be only ~1% smaller than the Seal and defeat the design. Otter hitbox is not bit-identical-gated; it is tuned in sandbox before its own 10k sweep, so this re-derivation is in-bounds.
