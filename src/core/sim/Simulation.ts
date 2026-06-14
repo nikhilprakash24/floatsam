@@ -4,7 +4,7 @@ import type { InputPolicy } from '../input/InputPolicy';
 import type { GameMode } from '../modes/GameMode';
 import { deriveEffective, type CharacterProfile } from '../character/CharacterProfile';
 import { GateSpawner, type DifficultyConfig, type Gate } from '../spawn/Spawner';
-import { clampsFor } from '../spawn/clampsFor';
+import { clampsFor, gapScaleFor } from '../spawn/clampsFor';
 import { collectPassedGates } from '../score/score';
 import { createRng } from '../rng';
 
@@ -95,7 +95,12 @@ export class Simulation {
     this.massScale = eff.massScale;
     this.field = mode.makeField(eff);
     this.policy = mode.makeInputPolicy(eff);
-    this.spawner = new GateSpawner(this.difficulty, createRng(seed), clampsFor(character, mode));
+    this.spawner = new GateSpawner(
+      this.difficulty,
+      createRng(seed),
+      clampsFor(character, mode),
+      gapScaleFor(character, mode),
+    );
     this.body = createBody(mode.spawn.playerX, mode.spawn.worldHeight * 0.42);
     this.prevBody = this.body;
     this.hitboxRadius = eff.hitboxRadius;

@@ -1,9 +1,22 @@
 import { terminalSpeed } from '../fluid/FluidBody';
-import { deriveEffective, type CharacterProfile } from '../character/CharacterProfile';
+import { SEAL, deriveEffective, type CharacterProfile } from '../character/CharacterProfile';
 import type { GameMode } from '../modes/GameMode';
 import type { SpawnClamps } from './Spawner';
 
 export type { SpawnClamps };
+
+/**
+ * Per-(character × mode) gap-size multiplier (ARCHITECTURE v3.3 §3.2: spawn
+ * geometry is derived from the pair, not assumed). A bigger body needs a bigger
+ * gap (hitbox ratio); in Classic a stronger flap overshoots, so it needs extra
+ * vertical room (arc factor). Only ever ENLARGES — never tightens below the
+ * Seal baseline, so fairness can't regress. Seal = 1.0 exactly (bit-identical).
+ */
+export function gapScaleFor(character: CharacterProfile, mode: GameMode): number {
+  const sizeRatio = character.hitboxRadius / SEAL.hitboxRadius;
+  const arcFactor = mode.biaxial ? 1 : 1 + 0.6 * Math.max(0, character.thrustScale - 1);
+  return Math.max(1, sizeRatio * arcFactor);
+}
 
 /**
  * Derive a pair's vertical reachability clamps from (character × mode), so

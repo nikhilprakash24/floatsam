@@ -119,3 +119,18 @@ Owner asked to *see* the fluid dynamics, add a heavy creature, and a faster temp
 - **Pace wrapper** (`PaceSelect`: Base 1.0× / Faster 1.2× / Turbo 1.4×) scales only scroll-speed fields in `Simulation`; the spawner re-derives inter-gate time so fairness clamps tighten with tempo automatically. pace 1.0 leaves Classic(Seal) bit-identical (golden master still green). Addresses "it's a bit easy."
 - **Sea Lion** added as the 4th character (heavy + powerful: massScale 1.35, thrustScale 1.40, big hitbox; Power 5 / Agility 1, epic rarity). Roster is now Seal / Otter / Puffer / Sea Lion. Fairness matrix at G6 grows to 4 characters × 2 modes = 8 sweeps; `clampsFor()` keeps it derived, not redesigned.
 - **UI:** reusable `ui/Button` (primary/ghost, hover/press); menu and every back affordance are now real buttons. Flow: Menu → PaceSelect → ModeSelect → CharacterSelect → Game; Currents Lab is a separate menu entry.
+
+## ADR-012 — Per-character gap-size derivation (gapScaleFor)
+**Date:** 2026-06-14 · **Author:** Physics + QA
+
+The first fairness probe of the 4-character roster exposed that `clampsFor()` (vertical reachability) wasn't enough: **Classic Puffer & Sea Lion scored 0/200** — their powerful flaps (thrustScale 1.18 / 1.40 → big tap arcs) plus large hitboxes overshot and clipped every gate, and Dive Puffer/Sea Lion were marginal (86–90%). Fix, per v3.3 §3.2 (spawn geometry derived from the pair): `gapScaleFor(character, mode)` enlarges gaps by the hitbox ratio (bigger body ⇒ bigger gap) times, in Classic, an arc factor `1 + 0.6·max(0, thrustScale−1)` (stronger flap ⇒ more vertical room). It **only ever enlarges** (never tightens below the Seal baseline) so fairness can't regress, and `max(1, …)` makes **Seal exactly 1.0 → bit-identical** (golden master still green). Result: all 8 pairs jumped to 100%.
+
+## GATE G6 — Phase 6 closed
+**Date:** 2026-06-14 · **Author:** Orchestrator
+
+- **Mode system + characters + Dive shipped and selectable** at the preview URL: Classic & Dive modes × Seal/Otter/Puffer/Sea Lion roster, via Menu → Tempo → Mode → Creature flow. Both bit-identical refactor gates (GameMode, CharacterProfile) passed and remain green (golden master).
+- **Fairness matrix — full sweep run and clean:** a reference bot (tap controller for Classic, bang-bang up/down for Dive) cleared 15 gates in **0 failures across 8 pairs × 10,000 seeds = 80,000 runs** (min score 15 every pair). Committed continuous guard: `fairness-matrix.test.ts` at 1,500 seeds/pair + a pace check. Fairness is correct **by construction** — `clampsFor()` (reachability) + `gapScaleFor()` (gap size) derive each pair's layout from its own physics.
+- **Pace wrapper fair:** Classic & Dive (Seal) clear 15 gates at Base, Faster (+20%) and Turbo (+40%) at 100% (1,000 seeds each); the spawner re-derives inter-gate time from the scaled speed so reachability holds at tempo. Base is the bot-verified-fair tempo; Faster/Turbo remain reachable-by-construction.
+- **Input scheme locked** (ADR-009), **roster trait cards + OVR** shipped, **Currents Lab** (vector fields + visualizer) built with otter-anchored field invariants unit-tested (ADR-011).
+- Suite: unit/sim green incl. the 80k matrix (full run as one-time verification) and 10 e2e. Build ~1.19 MB.
+- **Carried forward:** per-pair *feel* sims (numeric tap-rate / depth-hold targets §4.1) and human feel sign-off are still open — the matrix proves *fair*, not yet *tuned-to-feel*. Otter/Puffer/Sea Lion/Dive feel values remain first-pass.

@@ -59,6 +59,7 @@ export class GateSpawner {
     private readonly cfg: DifficultyConfig,
     private readonly rng: Rng,
     clamps?: SpawnClamps,
+    private readonly gapScale = 1,
   ) {
     // Per-(character × mode) reachability clamps; defaults to the config's own
     // values so direct construction (unit tests) keeps the shipped behavior.
@@ -94,7 +95,7 @@ export class GateSpawner {
   }
 
   private makeGate(x: number, score: number): Gate {
-    const gapSize = gapSizeFor(score, this.cfg);
+    const gapSize = gapSizeFor(score, this.cfg) * this.gapScale;
     return {
       id: this.nextId++,
       x,
@@ -114,7 +115,7 @@ export class GateSpawner {
     }
     for (const g of this.gates) {
       if (g.x < -this.cfg.pipeWidth) {
-        const gapSize = gapSizeFor(score, this.cfg);
+        const gapSize = gapSizeFor(score, this.cfg) * this.gapScale;
         g.x = rightmost + this.cfg.spawnSpacing;
         g.gapCenterY = this.nextGapCenter(score, gapSize);
         g.gapSize = gapSize;
