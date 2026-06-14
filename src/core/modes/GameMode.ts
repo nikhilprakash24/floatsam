@@ -16,6 +16,8 @@ export interface GameMode {
   readonly name: string;
   /** True if the mode uses bidirectional thrust (Dive/Lab) vs tap-up (Classic). */
   readonly biaxial: boolean;
+  /** True if the player can move horizontally (Power Dive) vs fixed-x scroller. */
+  readonly freeX?: boolean;
   /** Base continuous-force tuning for this mode (pre-character-scaling). */
   readonly physics: FluidPhysicsConfig;
   /** Spawn / difficulty profile (pre-character clamp derivation). */

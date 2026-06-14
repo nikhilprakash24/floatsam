@@ -170,14 +170,21 @@ export class Simulation {
       this.body = { ...this.body, y: surfaceY, vy: Math.max(0, this.body.vy) };
     }
 
+    // Free-x modes (Power Dive): keep the body inside its horizontal band.
+    if (this.mode.freeX) {
+      const xMin = this.difficulty.playerXMin ?? this.difficulty.playerX;
+      const xMax = this.difficulty.playerXMax ?? this.difficulty.playerX;
+      if (this.body.x < xMin) this.body = { ...this.body, x: xMin, vx: Math.max(0, this.body.vx) };
+      else if (this.body.x > xMax) this.body = { ...this.body, x: xMax, vx: Math.min(0, this.body.vx) };
+    }
+
     if (this.phase === 'PLAY') {
       this.spawner.update(this.physics.fixedStep, this.score);
 
-      const gained = collectPassedGates(
-        this.spawner.gates,
-        this.difficulty.playerX,
-        this.difficulty.pipeWidth,
-      );
+      // Free-x modes score on the body's actual x (it can move forward past a
+      // gate); fixed-x modes score on the static player line (bit-identical).
+      const scoreX = this.mode.freeX ? this.body.x : this.difficulty.playerX;
+      const gained = collectPassedGates(this.spawner.gates, scoreX, this.difficulty.pipeWidth);
       if (gained > 0) {
         this.score += gained;
         this.events.onScore?.(this.score);

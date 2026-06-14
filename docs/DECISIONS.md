@@ -134,3 +134,13 @@ The first fairness probe of the 4-character roster exposed that `clampsFor()` (v
 - **Input scheme locked** (ADR-009), **roster trait cards + OVR** shipped, **Currents Lab** (vector fields + visualizer) built with otter-anchored field invariants unit-tested (ADR-011).
 - Suite: unit/sim green incl. the 80k matrix (full run as one-time verification) and 10 e2e. Build ~1.19 MB.
 - **Carried forward:** per-pair *feel* sims (numeric tap-rate / depth-hold targets §4.1) and human feel sign-off are still open — the matrix proves *fair*, not yet *tuned-to-feel*. Otter/Puffer/Sea Lion/Dive feel values remain first-pass.
+
+## ADR-013 — Power Dive: a free-x "advanced" mode (owner-requested)
+**Date:** 2026-06-14 · **Author:** Orchestrator (owner request)
+
+Owner asked for a mode where a dive adds **forward motion** in addition to down, differing per character, as a bridge to making currents matter in gameplay. Built as **Power Dive** (3rd public mode):
+- **`PowerDivePolicy`**: holding dive thrusts down AND forward (+x); rising is pure up. The forward thrust is character-scaled (Sea Lion lunges hardest, Otter least) so the same input feels different across the roster. Still a small per-step Δv → momentum carries.
+- **Free-x body**: `GameMode.freeX` lets the body roam horizontally in a band `[playerXMin, playerXMax]`; a `HomeSpringField` (`Fx = −k·(x−homeX)`) pulls it back to a home column. Scoring uses the body's actual x (fixed-x modes keep the static line → bit-identical). The spring stiffness is **mass-scaled** so the integrator's `a = F/mass` yields mass-independent recovery (heavy creatures snap home crisply instead of wallowing forward into pipes — the key tuning fix).
+- This free-x body is deliberately the **seam for lateral currents** later (§9): a sideways current only matters if the player can move sideways.
+- **Fairness — relaxed "advanced" bar:** the dive→forward coupling means a naive bang-bang bot occasionally traps itself, so Power Dive is held to **≥99% of seeds clearable** (committed at 1,500 seeds/character) rather than the strict 0-failure bar of Classic/Dive. Measured: Seal/Otter 100%, Puffer 99.67%, Sea Lion 99.53%. A human using the lunge deliberately (rather than as a descent side-effect) does better; the bot ceiling is a controller limit, not an unfair layout. Recorded honestly as advanced/experimental.
+- Classic/Dive untouched; the golden master and the strict G6 matrix stay green.

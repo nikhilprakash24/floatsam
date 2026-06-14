@@ -8,8 +8,9 @@ const H = difficulty.worldHeight;
 const FONT = '"Trebuchet MS", sans-serif';
 
 const BLURB: Record<string, string> = {
-  classic: 'Tap to swim up.\nBuoyancy does the rest.',
-  dive: 'Hold top to rise,\nbottom to dive. Both ways.',
+  classic: 'Tap to swim up. Buoyancy does the rest.',
+  dive: 'Hold top to rise, bottom to dive.',
+  powerdive: 'Dive lunges down AND forward —\nroam, then snap home.',
 };
 
 /** Mode picker (v3.3 §1): Classic vs Dive. Currents Lab is dev-flag-only. */
@@ -24,9 +25,9 @@ export class ModeSelectScene extends Phaser.Scene {
     this.add.image(W / 2, H - 24, 'sand');
 
     this.add
-      .text(W / 2, H * 0.13, 'CHOOSE MODE', {
+      .text(W / 2, H * 0.09, 'CHOOSE MODE', {
         fontFamily: FONT,
-        fontSize: '38px',
+        fontSize: '34px',
         fontStyle: 'bold',
         color: '#e8f6fb',
         stroke: '#0a2e3d',
@@ -35,7 +36,7 @@ export class ModeSelectScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     MODES.forEach((mode, i) => {
-      this.card(H * 0.34 + i * 175, mode.name, BLURB[mode.id] ?? '', () => {
+      this.card(150 + i * 142, mode.name, BLURB[mode.id] ?? '', () => {
         this.registry.set('modeId', mode.id);
         this.scene.start('CharacterSelect');
       });
@@ -48,21 +49,21 @@ export class ModeSelectScene extends Phaser.Scene {
     const c = this.add.container(W / 2, cy);
     const bg = this.add.graphics();
     bg.fillStyle(0x0a3142, 0.9);
-    bg.fillRoundedRect(-180, -70, 360, 140, 16);
+    bg.fillRoundedRect(-180, -58, 360, 116, 16);
     bg.lineStyle(3, 0x1d8a77);
-    bg.strokeRoundedRect(-180, -70, 360, 140, 16);
+    bg.strokeRoundedRect(-180, -58, 360, 116, 16);
     c.add(bg);
     c.add(
       this.add
-        .text(0, -34, title, { fontFamily: FONT, fontSize: '30px', fontStyle: 'bold', color: '#ffd97a' })
+        .text(0, -28, title, { fontFamily: FONT, fontSize: '28px', fontStyle: 'bold', color: '#ffd97a' })
         .setOrigin(0.5),
     );
     c.add(
       this.add
-        .text(0, 18, blurb, { fontFamily: FONT, fontSize: '19px', color: '#cfe9f2', align: 'center' })
+        .text(0, 16, blurb, { fontFamily: FONT, fontSize: '17px', color: '#cfe9f2', align: 'center' })
         .setOrigin(0.5),
     );
-    c.setSize(360, 140).setInteractive({ useHandCursor: true });
+    c.setSize(360, 116).setInteractive({ useHandCursor: true });
     c.on('pointerover', () => bg.setAlpha(1));
     c.on('pointerout', () => bg.setAlpha(0.9));
     c.on('pointerdown', onPick);

@@ -20,6 +20,9 @@ export interface DifficultyConfig {
   worldHeight: number;
   playerX: number;
   playerRadius: number;
+  /** Horizontal travel band for free-x modes; default to playerX (no travel). */
+  playerXMin?: number;
+  playerXMax?: number;
 }
 
 export interface Gate {

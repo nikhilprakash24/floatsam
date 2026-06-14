@@ -246,7 +246,9 @@ export class GameScene extends Phaser.Scene {
       .filter((g) => g.x + D.pipeWidth / 2 + hitR > this.sim.body.x)
       .sort((a, b) => a.x - b.x)[0];
     (window as { __sim?: object }).__sim = {
+      x: this.sim.body.x,
       y: this.sim.body.y,
+      vx: this.sim.body.vx,
       vy: this.sim.body.vy,
       score: this.sim.score,
       phase: this.sim.phase,

@@ -1,0 +1,43 @@
+{
+  "physics": {
+    "gravity": 600,
+    "buoyancyAccel": 598,
+    "dragCoefficient": 0.014,
+    "swimImpulse": 0,
+    "swimBlendSteps": 1,
+    "maxRiseSpeed": 420,
+    "maxSinkSpeed": 360,
+    "fixedStep": 0.016666666666666666
+  },
+  "biaxial": {
+    "thrustUp": 700,
+    "thrustDown": 520,
+    "attackMs": 120,
+    "decayMs": 180
+  },
+  "thrustForward": 175,
+  "springK": 10,
+  "spawn": {
+    "scrollSpeedBase": 122,
+    "scrollSpeedMax": 174,
+    "speedRampPerPoint": 2.4,
+    "gapStart": 268,
+    "gapMin": 226,
+    "gapShrinkPerPoint": 1.4,
+    "spawnSpacing": 335,
+    "firstGateX": 660,
+    "gapCenterMinY": 140,
+    "gapCenterMaxY": 580,
+    "maxRisePerSecond": 160,
+    "maxSinkPerSecond": 150,
+    "fairnessSafety": 0.75,
+    "pipeWidth": 70,
+    "deathSlowmoMs": 300,
+    "worldWidth": 480,
+    "worldHeight": 720,
+    "playerX": 140,
+    "playerRadius": 24,
+    "playerXMin": 110,
+    "playerXMax": 250
+  }
+}

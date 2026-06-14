@@ -33,13 +33,28 @@ export function classicShouldTap(sim: Simulation): boolean {
   return sim.body.y + sim.body.vy * 0.2 > brake;
 }
 
-/** Dive bang-bang controller: track the next gap centre with up/down thrust. */
+/**
+ * Dive bang-bang controller: track the next gap centre with up/down thrust.
+ * In free-x modes (Power Dive) a dive also lunges forward, so it aligns earlier
+ * (longer lookahead) and eases off diving once horizontally on top of the gate
+ * to avoid lunging into a misaligned pipe.
+ */
 export function diveHold(sim: Simulation): { up: boolean; down: boolean } {
   const cur = nextGate(sim);
   const target = cur ? cur.gapCenterY : sim.difficulty.worldHeight * 0.5;
-  const predicted = sim.body.y + sim.body.vy * 0.22;
+  const lookahead = sim.mode.freeX ? 0.32 : 0.22;
+  const predicted = sim.body.y + sim.body.vy * lookahead;
   const dead = cur ? Math.max(10, cur.gapSize * 0.12) : 20;
-  if (predicted > target + dead) return { up: true, down: false };
+
+  if (predicted > target + dead) {
+    // About to lunge into the gate's x-zone? Only dive if we'd land in the gap.
+    if (sim.mode.freeX && cur) {
+      const near = cur.x - sim.body.x < sim.difficulty.pipeWidth + sim.hitboxRadius + 24;
+      const wouldClearTop = predicted < cur.gapCenterY + cur.gapSize / 2 - sim.hitboxRadius;
+      if (near && !wouldClearTop) return { up: false, down: false };
+    }
+    return { up: true, down: false };
+  }
   if (predicted < target - dead) return { up: false, down: true };
   return { up: false, down: false };
 }

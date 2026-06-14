@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
 interface SimState {
+  x: number;
   y: number;
+  vx: number;
   vy: number;
   score: number;
   phase: 'PLAY' | 'DEAD' | 'OVER';
@@ -169,10 +171,10 @@ async function holdDive(
   page: Page,
   control: 'right' | 'down' | 'up',
   ms: number,
-): Promise<{ vy: number; y: number }> {
+): Promise<{ vy: number; y: number; x: number; vx: number }> {
   return page.evaluate(
     ({ control, ms }) =>
-      new Promise<{ vy: number; y: number }>((resolve) => {
+      new Promise<{ vy: number; y: number; x: number; vx: number }>((resolve) => {
         const c = document.querySelector('canvas')!;
         const r = c.getBoundingClientRect();
         const code = control === 'down' ? 'ArrowDown' : 'ArrowUp';
@@ -195,9 +197,9 @@ async function holdDive(
         };
         press();
         setTimeout(() => {
-          const s = window.__sim as { vy: number; y: number };
+          const s = window.__sim as { vy: number; y: number; x: number; vx: number };
           release();
-          resolve({ vy: s.vy, y: s.y });
+          resolve({ vy: s.vy, y: s.y, x: s.x, vx: s.vx });
         }, ms);
       }),
     { control, ms },
@@ -228,4 +230,17 @@ test('Dive mode: keyboard ↑ rises upward (ADR-009)', async ({ page }) => {
   // From rest, up-thrust must flip the gentle downward drift to a clear rise.
   const up = await holdDive(page, 'up', 700);
   expect(up.vy).toBeLessThan(-ACTIVE_DIVE_VY);
+});
+
+test('Power Dive: a dive lunges forward AND down (ADR-013)', async ({ page }) => {
+  await page.goto('/?play=1&mode=powerdive&character=sealion');
+  await expect(page.locator('canvas')).toBeVisible();
+  await tapCanvas(page); // start
+  await expect.poll(async () => (await simState(page))?.started).toBe(true);
+  const x0 = (await simState(page))!.x;
+  const s = await holdDive(page, 'down', 450);
+  // Forward lunge (+x) on top of the descent, captured during the hold.
+  expect(s.vy).toBeGreaterThan(ACTIVE_DIVE_VY);
+  expect(s.x).toBeGreaterThan(x0); // moved forward
+  expect(s.vx).toBeGreaterThan(0);
 });
