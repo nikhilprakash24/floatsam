@@ -32,6 +32,10 @@ export class GameScene extends Phaser.Scene {
   private fxChecked = false;
   private mode!: GameMode;
   private bestKey!: string;
+  private hint?: Phaser.GameObjects.Text;
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private keyW!: Phaser.Input.Keyboard.Key;
+  private keyS!: Phaser.Input.Keyboard.Key;
 
   constructor() {
     super('Game');
@@ -89,33 +93,51 @@ export class GameScene extends Phaser.Scene {
     this.bubbles.setDepth(9);
 
     // Idle hint until the first input starts the run.
-    const hint = this.add
-      .text(D.worldWidth / 2, D.worldHeight * 0.62, mode.biaxial ? 'hold top to rise\nhold bottom to dive' : 'tap to swim', {
-        fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '26px',
-        color: '#cfe9f2',
-        align: 'center',
-      })
+    this.hint = this.add
+      .text(
+        D.worldWidth / 2,
+        D.worldHeight * 0.62,
+        mode.biaxial
+          ? 'rise: top half / left-click / ↑\ndive: bottom half / right-click / ↓'
+          : 'tap, click, ↑ or space to swim',
+        {
+          fontFamily: '"Trebuchet MS", sans-serif',
+          fontSize: mode.biaxial ? '20px' : '24px',
+          color: '#cfe9f2',
+          align: 'center',
+        },
+      )
       .setOrigin(0.5)
       .setDepth(20);
-    this.tweens.add({ targets: hint, alpha: 0.35, duration: 600, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: this.hint, alpha: 0.35, duration: 600, yoyo: true, repeat: -1 });
 
     this.sfx = this.registry.get('sfx') as SfxSynth;
 
-    this.input.on('pointerdown', () => {
-      this.sfx.unlock();
-      this.sfx.startAmbient();
-      if (!this.started) {
-        this.started = true;
-        hint.destroy();
-      }
-      // Classic: each press is a discrete swim impulse. Dive: presses just
-      // start; rise/dive is driven by where the pointer is HELD (see update()).
-      if (!this.mode.biaxial && this.sim.phase === 'PLAY') {
-        this.sim.tap();
-        this.sfx.tap();
-        this.player.pulse(this);
-        this.bubbles.emitParticleAt(this.player.sprite.x - 26, this.player.sprite.y, 3);
+    // Right-click is a dive control — suppress the browser context menu.
+    this.input.mouse?.disableContextMenu();
+
+    const kb = this.input.keyboard!;
+    this.cursors = kb.createCursorKeys();
+    this.keyW = kb.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    this.keyS = kb.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.beginInput();
+      // Classic: a primary (left) press is a discrete swim impulse — right-click
+      // does nothing. Dive: the press just starts the run; rise/dive comes from
+      // held input in update().
+      if (!this.mode.biaxial && p.button === 0) this.classicFlap();
+    });
+
+    // Keyboard: ↑/Space (and W) flap in Classic; any control key starts the run.
+    kb.on('keydown', (e: KeyboardEvent) => {
+      const k = e.code;
+      const isControl =
+        k === 'ArrowUp' || k === 'ArrowDown' || k === 'KeyW' || k === 'KeyS' || k === 'Space';
+      if (!isControl) return;
+      this.beginInput();
+      if (!this.mode.biaxial && (k === 'ArrowUp' || k === 'Space' || k === 'KeyW')) {
+        this.classicFlap();
       }
     });
 
@@ -165,6 +187,50 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /** First input of the run: unlock audio, hide the hint, start the world. */
+  private beginInput(): void {
+    this.sfx.unlock();
+    this.sfx.startAmbient();
+    if (!this.started) {
+      this.started = true;
+      this.hint?.destroy();
+    }
+  }
+
+  private classicFlap(): void {
+    if (this.sim.phase !== 'PLAY') return;
+    this.sim.tap();
+    this.sfx.tap();
+    this.player.pulse(this);
+    this.bubbles.emitParticleAt(this.player.sprite.x - 26, this.player.sprite.y, 3);
+  }
+
+  /**
+   * Gather Dive intent from every supported scheme (input-scheme lock, ADR-009):
+   * keyboard ↑/↓ (or W/S), mouse left=rise / right=dive, and a touch fallback
+   * of screen-half position. Whichever the player uses, it becomes setHold().
+   */
+  private pollDiveInput(): void {
+    let up = this.cursors.up.isDown || this.keyW.isDown;
+    let down = this.cursors.down.isDown || this.keyS.isDown;
+
+    const ptr = this.input.activePointer;
+    if (ptr.isDown && this.sim.phase === 'PLAY') {
+      if (ptr.wasTouch) {
+        // Touch: no buttons → use which half of the screen is held.
+        if (ptr.worldY < D.worldHeight / 2) up = true;
+        else down = true;
+      } else {
+        if (ptr.leftButtonDown()) up = true;
+        if (ptr.rightButtonDown()) down = true;
+      }
+    }
+    this.sim.setHold(up, down);
+    if ((up || down) && this.sim.frame % 10 === 0) {
+      this.bubbles.emitParticleAt(this.player.sprite.x - 26, this.player.sprite.y, 1);
+    }
+  }
+
   override update(_time: number, delta: number): void {
     // Test/debug hook: headless e2e reads this to assert game state.
     const hitR = this.sim.hitboxRadius;
@@ -188,17 +254,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // Dive: feed held intent from the pointer's vertical half each frame.
-    if (this.mode.biaxial) {
-      const ptr = this.input.activePointer;
-      const holding = ptr.isDown && this.sim.phase === 'PLAY';
-      const up = holding && ptr.worldY < D.worldHeight / 2;
-      const down = holding && ptr.worldY >= D.worldHeight / 2;
-      this.sim.setHold(up, down);
-      if (holding && this.sim.frame % 10 === 0) {
-        this.bubbles.emitParticleAt(this.player.sprite.x - 26, this.player.sprite.y, 1);
-      }
-    }
+    // Dive: feed held intent (keyboard / mouse buttons / touch half) each frame.
+    if (this.mode.biaxial) this.pollDiveInput();
 
     const alpha = this.sim.advance(delta);
     const speed = scrollSpeedFor(this.sim.score, this.sim.difficulty);

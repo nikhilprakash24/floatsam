@@ -5,5 +5,12 @@
   "thrustScale": 1.0,
   "dragScale": 1.0,
   "buoyancyScale": 1.0,
-  "hitboxRadius": 19.2
+  "hitboxRadius": 19.2,
+  "card": {
+    "number": "01",
+    "role": "All-Rounder",
+    "rarity": "common",
+    "flavor": "The original. Steady in any current — no weakness, no gimmick.",
+    "traits": { "power": 3, "agility": 3, "glide": 3, "float": 3, "stealth": 3 }
+  }
 }

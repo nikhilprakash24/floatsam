@@ -1,9 +1,16 @@
 {
   "id": "otter",
   "name": "Otter",
-  "massScale": 0.8,
-  "thrustScale": 0.72,
-  "dragScale": 0.9,
-  "buoyancyScale": 0.95,
-  "hitboxRadius": 15.2
+  "massScale": 0.7,
+  "thrustScale": 0.7,
+  "dragScale": 0.84,
+  "buoyancyScale": 0.9,
+  "hitboxRadius": 14,
+  "card": {
+    "number": "02",
+    "role": "Acrobat",
+    "rarity": "rare",
+    "flavor": "Twitchy, fragile, impossible to pin down. A weak flap but a tiny target.",
+    "traits": { "power": 2, "agility": 5, "glide": 4, "float": 2, "stealth": 5 }
+  }
 }

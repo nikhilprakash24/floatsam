@@ -89,3 +89,22 @@ v3.3 §3.2 says `hitboxRadius` "replaces fixed r=24 / 80% rule" and §4.2 gives 
 - `otter.json hitboxRadius = 15.2` (≈21% smaller than the Seal's *actual* 19.2), preserving the spec's stated "~21% smaller threat circle" compensating-buff intent — rather than the literal 19, which would be only ~1% smaller than the Seal and defeat the design. Otter hitbox is not bit-identical-gated; it is tuned in sandbox before its own 10k sweep, so this re-derivation is in-bounds.
 
 **Addendum (P6 step 2):** the literal `19.2` is not float-equal to the shipped `24 × 0.8 = 19.200000000000003` (they differ by ~3e-15 px). The golden-master regression was re-run after wiring `seal.json` through `deriveEffective`: the full 1500-frame Classic(Seal) trajectory (positions, velocities, score, phase, gate stream) reproduces **exactly** — the sub-femtopixel hitbox difference flips no collision boundary in the frozen run (its death is a seabed sink, no gate edge within 3e-15). The bit-identical gate is satisfied at the observable-behavior level; we keep the human-readable `19.2`.
+
+## ADR-009 — Dive input scheme locked (multi-scheme, owner playtest)
+**Date:** 2026-06-13 · **Author:** Orchestrator (owner playtest feedback)
+
+v3.3 §3.3 left the Dive input "locked by a playtest ADR before G6." Owner playtested and chose a multi-scheme control set; locked as:
+- **Keyboard:** ↑ / W = rise, ↓ / S = dive (desktop primary).
+- **Mouse:** left-button held = rise, **right-button held = dive** (context menu suppressed on the canvas).
+- **Touch fallback:** held screen half — top = rise, bottom = dive (mobile, no buttons; distinguished via `pointer.wasTouch`).
+- **Classic** additionally accepts ↑ / Space / W / left-click as the flap (tap unchanged).
+All schemes resolve to the same `InputPolicy.setHold(up, down)` each fixed step, so determinism and the BiAxial momentum properties are unaffected. Implemented in `GameScene.pollDiveInput()`. The thumb-drag prototype (§3.3) is dropped in favor of this set.
+
+## ADR-010 — Early roster expansion to 3 + Otter retune (owner-requested)
+**Date:** 2026-06-13 · **Author:** Orchestrator (owner request)
+
+v3.3 scoped P6 to Seal + Otter (roster growth was §9 post-launch). The owner asked for more inter-character contrast and a card presentation, so:
+- **Added a third character, Puffer** (heavy / very floaty / wide / strong push) as the "tank" counterpoint to the Otter's "glass cannon," giving a Seal-balanced / Otter-agile / Puffer-floaty trait triangle. Pure data + a procedural sprite — zero engine change, per the §3.2 promise.
+- **Otter retuned for felt distinctiveness:** massScale 0.8→0.7, thrustScale 0.72→0.7, dragScale 0.9→0.84, buoyancyScale 0.95→0.9, hitbox 15.2→14 (supersedes the ADR-008 starting value).
+- **Card metadata** (curated 1–5 traits, role, rarity, flavor, number) added to each profile; `overallRating()` derives an OVR from the trait mean. Presentation only — the sim ignores it.
+- **Consequence for G6:** the fairness matrix grows to **3 characters × 2 modes = 6 sweeps**. `clampsFor()` keeps every pair's clamps derived, so this is added sweep cost, not redesign. Classic(Seal) remains bit-identical (the golden master still passes); all new pairs await their 10k sweeps + human feel sign-off before G6 closes.

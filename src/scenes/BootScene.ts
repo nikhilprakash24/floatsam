@@ -20,6 +20,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     this.makeSeal();
     this.makeOtter();
+    this.makePuffer();
     this.makeReefColumn();
     this.makeBubble();
     this.makeBackgrounds();
@@ -110,6 +111,51 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x6e5639);
     g.fillEllipse(34, 35, 14, 6);
     g.generateTexture('otter', 68, 44);
+    g.destroy();
+  }
+
+  /** Puffer: big, round, spiky — heavy·floaty·wide (v3.3 roster). */
+  private makePuffer(): void {
+    const g = this.add.graphics();
+    const cx = 40;
+    const cy = 40;
+    // Spikes radiating out.
+    g.fillStyle(0xc77f3a);
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const bx = cx + Math.cos(a) * 26;
+      const by = cy + Math.sin(a) * 26;
+      const tx = cx + Math.cos(a) * 36;
+      const ty = cy + Math.sin(a) * 36;
+      const px = Math.cos(a + 0.18) * 5;
+      const py = Math.sin(a + 0.18) * 5;
+      g.fillTriangle(bx - px, by - py, bx + px, by + py, tx, ty);
+    }
+    // Round body
+    g.fillStyle(0xe0954b);
+    g.fillCircle(cx, cy, 27);
+    // Belly
+    g.fillStyle(0xf5dcb0);
+    g.fillEllipse(cx - 2, cy + 7, 38, 24);
+    // Spots
+    g.fillStyle(0xc77f3a, 0.7);
+    g.fillCircle(cx - 12, cy - 8, 3);
+    g.fillCircle(cx + 6, cy - 12, 2.5);
+    g.fillCircle(cx + 14, cy + 2, 3);
+    // Cheeks
+    g.fillStyle(0xf0a86a);
+    g.fillCircle(cx + 16, cy + 8, 6);
+    // Eyes
+    g.fillStyle(0xffffff);
+    g.fillCircle(cx + 9, cy - 4, 6);
+    g.fillCircle(cx + 21, cy - 3, 5);
+    g.fillStyle(0x1c140d);
+    g.fillCircle(cx + 11, cy - 3, 2.6);
+    g.fillCircle(cx + 22, cy - 2, 2.3);
+    // Tiny mouth
+    g.fillStyle(0x8a4a22);
+    g.fillEllipse(cx + 22, cy + 9, 6, 4);
+    g.generateTexture('puffer', 80, 80);
     g.destroy();
   }
 

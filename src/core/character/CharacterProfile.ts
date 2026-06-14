@@ -1,6 +1,41 @@
 import sealJson from '../../config/characters/seal.json';
 import otterJson from '../../config/characters/otter.json';
+import pufferJson from '../../config/characters/puffer.json';
 import type { FluidPhysicsConfig } from '../fluid/FluidBody';
+
+/** Card-display traits, 1–5 (presentation metadata; curated to reflect physics). */
+export interface CharacterTraits {
+  power: number;
+  agility: number;
+  glide: number;
+  float: number;
+  stealth: number;
+}
+
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic';
+
+export interface CharacterCard {
+  number: string;
+  role: string;
+  rarity: Rarity;
+  flavor: string;
+  traits: CharacterTraits;
+}
+
+export const TRAIT_ORDER: readonly (keyof CharacterTraits)[] = [
+  'power',
+  'agility',
+  'glide',
+  'float',
+  'stealth',
+];
+
+/** Overall rating (baseball-card style), derived from the trait mean → 20–99. */
+export function overallRating(card: CharacterCard): number {
+  const vals = TRAIT_ORDER.map((k) => card.traits[k]);
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  return Math.round((mean / 5) * 99);
+}
 
 /**
  * A character = one data profile (ARCHITECTURE v3.3 §3.2): scale factors on the
@@ -21,6 +56,8 @@ export interface CharacterProfile {
   buoyancyScale: number;
   /** Absolute collision radius (replaces the shipped r×0.8 rule). */
   hitboxRadius: number;
+  /** Trading-card presentation metadata (ignored by the sim). */
+  card: CharacterCard;
 }
 
 /** Effective continuous-force config for one (mode × character) pair. */
@@ -56,11 +93,12 @@ export function deriveEffective(base: FluidPhysicsConfig, c: CharacterProfile): 
   };
 }
 
-export const SEAL: CharacterProfile = sealJson;
-export const OTTER: CharacterProfile = otterJson;
+export const SEAL: CharacterProfile = sealJson as CharacterProfile;
+export const OTTER: CharacterProfile = otterJson as CharacterProfile;
+export const PUFFER: CharacterProfile = pufferJson as CharacterProfile;
 
 /** Selectable roster (v3.3 §1). Pure data — a creature is JSON + sprites. */
-export const CHARACTERS: readonly CharacterProfile[] = [SEAL, OTTER];
+export const CHARACTERS: readonly CharacterProfile[] = [SEAL, OTTER, PUFFER];
 
 export function characterById(id: string | null | undefined): CharacterProfile {
   return CHARACTERS.find((c) => c.id === id) ?? SEAL;

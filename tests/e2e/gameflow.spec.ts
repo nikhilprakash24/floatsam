@@ -157,21 +157,75 @@ test('menu advances into the mode/character select flow', async ({ page }) => {
   expect(await page.evaluate(() => window.__sim)).toBeUndefined();
 });
 
-test('Dive mode: holding the bottom half actively dives downward', async ({ page }) => {
+async function startDiveRun(page: Page): Promise<void> {
   await page.goto('/?play=1&mode=dive&character=seal');
   await expect(page.locator('canvas')).toBeVisible();
-  await tapCanvas(page); // start the world
+  await tapCanvas(page); // first interaction starts the world
+  await expect.poll(async () => (await simState(page))?.started).toBe(true);
+}
+
+/** Hold a control for `ms` via in-page events (headless-stable), return vy/y. */
+async function holdDive(
+  page: Page,
+  control: 'right' | 'down' | 'up',
+  ms: number,
+): Promise<{ vy: number; y: number }> {
+  return page.evaluate(
+    ({ control, ms }) =>
+      new Promise<{ vy: number; y: number }>((resolve) => {
+        const c = document.querySelector('canvas')!;
+        const r = c.getBoundingClientRect();
+        const code = control === 'down' ? 'ArrowDown' : 'ArrowUp';
+        const keyCode = control === 'down' ? 40 : 38; // Phaser 3 matches on keyCode
+        const mid = { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true };
+        const press = () => {
+          if (control === 'right') {
+            c.dispatchEvent(new MouseEvent('mousemove', { ...mid, buttons: 2 }));
+            c.dispatchEvent(new MouseEvent('mousedown', { ...mid, button: 2, buttons: 2 }));
+          } else {
+            window.dispatchEvent(new KeyboardEvent('keydown', { code, key: code, keyCode, which: keyCode, bubbles: true }));
+          }
+        };
+        const release = () => {
+          if (control === 'right') {
+            c.dispatchEvent(new MouseEvent('mouseup', { ...mid, button: 2, buttons: 0 }));
+          } else {
+            window.dispatchEvent(new KeyboardEvent('keyup', { code, key: code, keyCode, which: keyCode, bubbles: true }));
+          }
+        };
+        press();
+        setTimeout(() => {
+          const s = window.__sim as { vy: number; y: number };
+          release();
+          resolve({ vy: s.vy, y: s.y });
+        }, ms);
+      }),
+    { control, ms },
+  );
+}
+
+// Passive near-neutral drift terminates at ~12 px/s; >25 is unambiguously
+// active T_down. (Kept modest because headless rAF + the sim's accumulator
+// clamp advance less wall-time than a real browser.)
+const ACTIVE_DIVE_VY = 25;
+
+test('Dive mode: right-click actively dives downward (ADR-009)', async ({ page }) => {
+  await startDiveRun(page);
   const y0 = (await simState(page))!.y;
-
-  // Real pointer held in the lower half → sustained T_down.
-  await page.mouse.move(240, 612);
-  await page.mouse.down();
-  await page.waitForTimeout(700);
-  const s = (await simState(page))!;
-  await page.mouse.up();
-
-  // Robust to frame rate: assert it is *actively* diving (passive drift is
-  // ~12 px/s near-neutral), not just a displacement threshold.
-  expect(s.vy).toBeGreaterThan(60);
+  const s = await holdDive(page, 'right', 700);
+  expect(s.vy).toBeGreaterThan(ACTIVE_DIVE_VY);
   expect(s.y).toBeGreaterThan(y0);
+});
+
+test('Dive mode: keyboard ↓ dives downward (ADR-009)', async ({ page }) => {
+  await startDiveRun(page);
+  const down = await holdDive(page, 'down', 700);
+  expect(down.vy).toBeGreaterThan(ACTIVE_DIVE_VY); // diving
+});
+
+test('Dive mode: keyboard ↑ rises upward (ADR-009)', async ({ page }) => {
+  await startDiveRun(page);
+  // From rest, up-thrust must flip the gentle downward drift to a clear rise.
+  const up = await holdDive(page, 'up', 700);
+  expect(up.vy).toBeLessThan(-ACTIVE_DIVE_VY);
 });

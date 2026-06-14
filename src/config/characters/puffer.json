@@ -1,0 +1,16 @@
+{
+  "id": "puffer",
+  "name": "Puffer",
+  "massScale": 1.4,
+  "thrustScale": 1.18,
+  "dragScale": 1.3,
+  "buoyancyScale": 1.16,
+  "hitboxRadius": 26,
+  "card": {
+    "number": "03",
+    "role": "Drifter",
+    "rarity": "uncommon",
+    "flavor": "Slow, round, and gloriously buoyant. Powerful push, but a wide load.",
+    "traits": { "power": 4, "agility": 1, "glide": 1, "float": 5, "stealth": 1 }
+  }
+}

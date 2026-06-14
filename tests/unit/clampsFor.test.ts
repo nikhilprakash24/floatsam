@@ -13,8 +13,8 @@ describe('clampsFor (per-pair reachability)', () => {
 
   it('Otter × Classic: weaker rise (flap power), faster sink (lighter, less drag)', () => {
     const c = clampsFor(OTTER, CLASSIC_MODE);
-    // Rise scales with thrustScale 0.72.
-    expect(c.maxRisePerSecond).toBeCloseTo(100 * 0.72, 9);
+    // Rise scales with the Otter's flap power.
+    expect(c.maxRisePerSecond).toBeCloseTo(100 * OTTER.thrustScale, 9);
     // Otter sinks faster than the Seal → looser down clamp than 45.
     expect(c.maxSinkPerSecond).toBeGreaterThan(45);
   });
@@ -25,7 +25,7 @@ describe('clampsFor (per-pair reachability)', () => {
     expect(seal.maxSinkPerSecond).toBe(DIVE_MODE.spawn.maxSinkPerSecond);
 
     const otter = clampsFor(OTTER, DIVE_MODE);
-    expect(otter.maxRisePerSecond).toBeCloseTo(DIVE_MODE.spawn.maxRisePerSecond * 0.72, 9);
-    expect(otter.maxSinkPerSecond).toBeCloseTo(DIVE_MODE.spawn.maxSinkPerSecond * 0.72, 9);
+    expect(otter.maxRisePerSecond).toBeCloseTo(DIVE_MODE.spawn.maxRisePerSecond * OTTER.thrustScale, 9);
+    expect(otter.maxSinkPerSecond).toBeCloseTo(DIVE_MODE.spawn.maxSinkPerSecond * OTTER.thrustScale, 9);
   });
 });
