@@ -2,6 +2,7 @@ import physicsJson from '../src/config/physics.json';
 import difficultyJson from '../src/config/difficulty.json';
 import { Simulation, type PhysicsConfigFull, type SimEvents } from '../src/core/sim/Simulation';
 import { CLASSIC_MODE } from '../src/core/modes/classicMode';
+import { SEAL } from '../src/core/character/CharacterProfile';
 import type { DifficultyConfig } from '../src/core/spawn/Spawner';
 
 export const PHYSICS: PhysicsConfigFull = physicsJson;
@@ -22,5 +23,5 @@ export function makeClassicSealSim(
   const mode = spawnPatch
     ? { ...CLASSIC_MODE, spawn: { ...CLASSIC_MODE.spawn, ...spawnPatch } }
     : CLASSIC_MODE;
-  return new Simulation(mode, seed, events);
+  return new Simulation(mode, SEAL, seed, events);
 }

@@ -1,0 +1,9 @@
+{
+  "id": "seal",
+  "name": "Seal",
+  "massScale": 1.0,
+  "thrustScale": 1.0,
+  "dragScale": 1.0,
+  "buoyancyScale": 1.0,
+  "hitboxRadius": 19.2
+}

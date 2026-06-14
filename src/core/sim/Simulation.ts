@@ -1,8 +1,8 @@
-import physicsJson from '../../config/physics.json';
 import { createBody, stepBody, type FluidBodyState, type FluidPhysicsConfig } from '../fluid/FluidBody';
 import type { FluidField } from '../fluid/FluidField';
 import type { InputPolicy } from '../input/InputPolicy';
 import type { GameMode } from '../modes/GameMode';
+import { deriveEffective, type CharacterProfile } from '../character/CharacterProfile';
 import { GateSpawner, type DifficultyConfig, type Gate } from '../spawn/Spawner';
 import { collectPassedGates } from '../score/score';
 import { createRng } from '../rng';
@@ -40,14 +40,11 @@ export function circleRectOverlap(
 }
 
 /**
- * The whole game, headless, parameterized by a GameMode (v3.3 §3.2). Fixed
- * 1/60 s steps behind an accumulator; rendering interpolates. Determinism is
- * keyed per (seed, mode[, character]) — identical inputs reproduce identical
- * runs (§3.1 rule 3). FluidBody is the only integrator (rule 4).
- *
- * Step-1 scope: the character is the implicit identity (massScale 1, effective
- * config = mode.physics, hitbox from the shipped 0.8 rule), so Classic remains
- * bit-identical. Step 2 swaps in a CharacterProfile + deriveEffective.
+ * The whole game, headless, parameterized by a (GameMode × CharacterProfile)
+ * pair (v3.3 §3.2). Fixed 1/60 s steps behind an accumulator; rendering
+ * interpolates. Determinism is keyed per (seed, mode, character) — identical
+ * inputs reproduce identical runs (§3.1 rule 3). FluidBody is the only
+ * integrator (rule 4); effective constants are derived once at construction.
  */
 export class Simulation {
   body: FluidBodyState;
@@ -74,19 +71,20 @@ export class Simulation {
 
   constructor(
     readonly mode: GameMode,
+    readonly character: CharacterProfile,
     seed: number,
     private readonly events: SimEvents = {},
   ) {
-    const eff = mode.physics;
+    const eff = deriveEffective(mode.physics, character);
     this.physics = eff;
     this.difficulty = mode.spawn;
-    this.massScale = 1;
+    this.massScale = eff.massScale;
     this.field = mode.makeField(eff);
     this.policy = mode.makeInputPolicy(eff);
     this.spawner = new GateSpawner(mode.spawn, createRng(seed));
     this.body = createBody(mode.spawn.playerX, mode.spawn.worldHeight * 0.42);
     this.prevBody = this.body;
-    this.hitboxRadius = mode.spawn.playerRadius * physicsJson.playerHitboxScale;
+    this.hitboxRadius = eff.hitboxRadius;
   }
 
   /** Queue a discrete press (Classic tap); consumed at the next fixed step. */
