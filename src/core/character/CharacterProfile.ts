@@ -1,6 +1,7 @@
 import sealJson from '../../config/characters/seal.json';
 import otterJson from '../../config/characters/otter.json';
 import pufferJson from '../../config/characters/puffer.json';
+import sealionJson from '../../config/characters/sealion.json';
 import type { FluidPhysicsConfig } from '../fluid/FluidBody';
 
 /** Card-display traits, 1–5 (presentation metadata; curated to reflect physics). */
@@ -96,9 +97,10 @@ export function deriveEffective(base: FluidPhysicsConfig, c: CharacterProfile): 
 export const SEAL: CharacterProfile = sealJson as CharacterProfile;
 export const OTTER: CharacterProfile = otterJson as CharacterProfile;
 export const PUFFER: CharacterProfile = pufferJson as CharacterProfile;
+export const SEALION: CharacterProfile = sealionJson as CharacterProfile;
 
 /** Selectable roster (v3.3 §1). Pure data — a creature is JSON + sprites. */
-export const CHARACTERS: readonly CharacterProfile[] = [SEAL, OTTER, PUFFER];
+export const CHARACTERS: readonly CharacterProfile[] = [SEAL, OTTER, PUFFER, SEALION];
 
 export function characterById(id: string | null | undefined): CharacterProfile {
   return CHARACTERS.find((c) => c.id === id) ?? SEAL;

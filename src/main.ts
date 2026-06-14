@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import difficulty from './config/difficulty.json';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
+import { PaceSelectScene } from './scenes/PaceSelectScene';
 import { ModeSelectScene } from './scenes/ModeSelectScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
 import { GameScene } from './scenes/GameScene';
@@ -9,6 +10,7 @@ import { HudScene } from './scenes/HudScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { PauseScene } from './scenes/PauseScene';
 import { SandboxScene } from './scenes/SandboxScene';
+import { LabScene } from './scenes/LabScene';
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -36,6 +38,7 @@ new Phaser.Game({
   scene: [
     BootScene,
     MenuScene,
+    PaceSelectScene,
     ModeSelectScene,
     CharacterSelectScene,
     GameScene,
@@ -43,5 +46,6 @@ new Phaser.Game({
     GameOverScene,
     PauseScene,
     SandboxScene,
+    LabScene,
   ],
 });

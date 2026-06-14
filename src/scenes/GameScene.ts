@@ -55,17 +55,25 @@ export class GameScene extends Phaser.Scene {
     const store = this.registry.get('store') as KVStore;
     this.registry.set('best', Number(store.get(this.bestKey) ?? 0));
 
-    // ?seed=N gives deterministic runs for e2e and debugging.
-    const urlSeed = Number(new URLSearchParams(window.location.search).get('seed'));
+    // ?seed=N gives deterministic runs for e2e and debugging; ?pace= overrides.
+    const params = new URLSearchParams(window.location.search);
+    const urlSeed = Number(params.get('seed'));
     const seed = urlSeed > 0 ? urlSeed : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
-    this.sim = new Simulation(mode, character, seed, {
-      onScore: (score) => {
-        this.registry.set('score', score);
-        this.sfx.score();
+    const pace = Number(params.get('pace')) || Number(this.registry.get('pace')) || 1;
+    this.sim = new Simulation(
+      mode,
+      character,
+      seed,
+      {
+        onScore: (score) => {
+          this.registry.set('score', score);
+          this.sfx.score();
+        },
+        onDeath: () => this.onDeath(),
+        onGameOver: () => this.onGameOver(),
       },
-      onDeath: () => this.onDeath(),
-      onGameOver: () => this.onGameOver(),
-    });
+      pace,
+    );
     this.registry.set('score', 0);
 
     this.bgFar = this.add.tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'bgFar').setDepth(1);

@@ -75,14 +75,27 @@ export class Simulation {
     readonly character: CharacterProfile,
     seed: number,
     private readonly events: SimEvents = {},
+    pace = 1,
   ) {
     const eff = deriveEffective(mode.physics, character);
     this.physics = eff;
-    this.difficulty = mode.spawn;
+    // Pace wrapper: scale only the scroll-speed fields. The spawner derives the
+    // inter-gate time from the scaled speed, so fairness clamps tighten with
+    // tempo automatically. pace === 1 leaves mode.spawn untouched (the value the
+    // golden master + 10k sweep were verified against — bit-identical).
+    this.difficulty =
+      pace === 1
+        ? mode.spawn
+        : {
+            ...mode.spawn,
+            scrollSpeedBase: mode.spawn.scrollSpeedBase * pace,
+            scrollSpeedMax: mode.spawn.scrollSpeedMax * pace,
+            speedRampPerPoint: mode.spawn.speedRampPerPoint * pace,
+          };
     this.massScale = eff.massScale;
     this.field = mode.makeField(eff);
     this.policy = mode.makeInputPolicy(eff);
-    this.spawner = new GateSpawner(mode.spawn, createRng(seed), clampsFor(character, mode));
+    this.spawner = new GateSpawner(this.difficulty, createRng(seed), clampsFor(character, mode));
     this.body = createBody(mode.spawn.playerX, mode.spawn.worldHeight * 0.42);
     this.prevBody = this.body;
     this.hitboxRadius = eff.hitboxRadius;

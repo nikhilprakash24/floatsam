@@ -10,6 +10,7 @@ import {
 import { modeById } from '../core/modes/modes';
 import { bestKeyFor } from '../core/score/score';
 import type { KVStore } from '../platform/Storage';
+import { makeBackButton } from '../ui/Button';
 
 const W = difficulty.worldWidth;
 const H = difficulty.worldHeight;
@@ -51,9 +52,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.index = li >= 0 ? li : 0;
 
     this.add
-      .text(W / 2, 40, 'CHOOSE CREATURE', {
+      .text(W / 2, 64, 'CHOOSE CREATURE', {
         fontFamily: FONT,
-        fontSize: '30px',
+        fontSize: '28px',
         fontStyle: 'bold',
         color: '#e8f6fb',
         stroke: '#0a2e3d',
@@ -61,7 +62,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.add
-      .text(W / 2, 70, `mode: ${mode.name}`, { fontFamily: FONT, fontSize: '17px', color: '#9fd8cf' })
+      .text(W / 2, 90, `mode: ${mode.name}`, { fontFamily: FONT, fontSize: '16px', color: '#9fd8cf' })
       .setOrigin(0.5);
 
     // Prev / next arrows.
@@ -79,14 +80,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.tweens.add({ targets: prompt, alpha: 0.4, duration: 650, yoyo: true, repeat: -1 });
 
-    this.add
-      .text(14, H - 12, '◀ modes', { fontFamily: FONT, fontSize: '16px', color: '#7fa8b8' })
-      .setOrigin(0, 1)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
-        e.stopPropagation();
-        this.scene.start('ModeSelect');
-      });
+    makeBackButton(this, '◀ modes', () => this.scene.start('ModeSelect'));
 
     this.renderCard();
   }
@@ -108,7 +102,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     const char = CHARACTERS[this.index]!;
     const accent = RARITY_COLOR[char.card.rarity];
     const cx = W / 2;
-    const cy = H * 0.45;
+    const cy = H * 0.475;
     const c = this.add.container(cx, cy);
     const left = -CARD_W / 2;
     const top = -CARD_H / 2;

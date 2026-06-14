@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import difficulty from '../config/difficulty.json';
 import type { SfxSynth } from '../platform/audio';
+import { makeButton } from '../ui/Button';
 
 const W = difficulty.worldWidth;
 const H = difficulty.worldHeight;
@@ -17,9 +18,9 @@ export class MenuScene extends Phaser.Scene {
     this.add.image(W / 2, H - 24, 'sand');
 
     this.add
-      .text(W / 2, H * 0.22, 'UNDERWATER\nFLAPPY', {
+      .text(W / 2, H * 0.18, 'UNDERWATER\nFLAPPY', {
         fontFamily: FONT,
-        fontSize: '52px',
+        fontSize: '50px',
         fontStyle: 'bold',
         color: '#e8f6fb',
         align: 'center',
@@ -28,10 +29,10 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const seal = this.add.image(W / 2, H * 0.45, 'seal').setScale(1.6);
+    const seal = this.add.image(W / 2, H * 0.4, 'seal').setScale(1.6);
     this.tweens.add({
       targets: seal,
-      y: H * 0.45 + 16,
+      y: H * 0.4 + 16,
       angle: 4,
       duration: 1200,
       yoyo: true,
@@ -49,54 +50,46 @@ export class MenuScene extends Phaser.Scene {
       frequency: 600,
     });
 
-    const start = this.add
-      .text(W / 2, H * 0.66, 'tap to dive', {
-        fontFamily: FONT,
-        fontSize: '30px',
-        color: '#ffd97a',
-        stroke: '#0a2e3d',
-        strokeThickness: 5,
-      })
-      .setOrigin(0.5);
-    this.tweens.add({ targets: start, alpha: 0.4, duration: 650, yoyo: true, repeat: -1 });
+    // Primary actions.
+    makeButton(this, W / 2, H * 0.58, '▶  PLAY', () => this.scene.start('PaceSelect'), {
+      width: 250,
+      height: 64,
+      fontSize: 28,
+    });
+    makeButton(this, W / 2, H * 0.68, '🌊  CURRENTS LAB', () => this.scene.start('Lab'), {
+      variant: 'ghost',
+      width: 250,
+      height: 52,
+      fontSize: 20,
+      accent: 0x4aa3e0,
+    });
 
     this.add
-      .text(W / 2, H * 0.74, 'classic · dive · seal · otter', {
+      .text(W / 2, H * 0.77, '2 modes · 4 creatures · 3 tempos', {
         fontFamily: FONT,
-        fontSize: '18px',
+        fontSize: '16px',
         color: '#bfdde8',
       })
       .setOrigin(0.5);
 
     const sfx = this.registry.get('sfx') as SfxSynth;
     const mute = this.add
-      .text(14, 14, sfx.isMuted() ? '🔇' : '🔊', { fontSize: '24px' })
+      .text(16, 16, sfx.isMuted() ? '🔇' : '🔊', { fontSize: '26px' })
       .setOrigin(0, 0)
       .setInteractive({ useHandCursor: true });
-    mute.on(
-      'pointerdown',
-      (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
-        e.stopPropagation();
-        sfx.unlock();
-        mute.setText(sfx.toggleMute() ? '🔇' : '🔊');
-      },
-    );
-
-    // Into the mode → character selection flow.
-    this.input.once('pointerdown', () => this.scene.start('ModeSelect'));
+    mute.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+      e.stopPropagation();
+      sfx.unlock();
+      mute.setText(sfx.toggleMute() ? '🔇' : '🔊');
+    });
 
     // Physics sandbox entry (Phase 1 tooling, kept for tuning sessions).
-    this.add
-      .text(W - 12, H - 10, 'sandbox', {
-        fontFamily: FONT,
-        fontSize: '15px',
-        color: '#7fa8b8',
-      })
-      .setOrigin(1, 1)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
-        e.stopPropagation();
-        this.scene.start('Sandbox');
-      });
+    makeButton(this, W - 60, H - 26, 'sandbox', () => this.scene.start('Sandbox'), {
+      variant: 'ghost',
+      width: 96,
+      height: 34,
+      fontSize: 14,
+      accent: 0x7fa8b8,
+    });
   }
 }

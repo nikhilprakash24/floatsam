@@ -1,0 +1,41 @@
+{
+  "presets": [
+    {
+      "id": "gentle-drift",
+      "name": "Gentle Drift",
+      "fields": [
+        { "type": "zone", "shape": "rect", "x": 240, "y": 360, "halfW": 240, "halfH": 360, "dirX": 1, "dirY": 0, "strength": 70, "falloff": 48 }
+      ]
+    },
+    {
+      "id": "whirlpool",
+      "name": "Whirlpool",
+      "fields": [
+        { "type": "vortex", "x": 240, "y": 360, "radius": 150, "strength": 140, "direction": 1, "inflow": 25, "maxAccel": 175 }
+      ]
+    },
+    {
+      "id": "drafts",
+      "name": "Up & Down Drafts",
+      "fields": [
+        { "type": "zone", "shape": "rect", "x": 130, "y": 360, "halfW": 110, "halfH": 340, "dirX": 0, "dirY": -1, "strength": 150, "falloff": 40 },
+        { "type": "zone", "shape": "rect", "x": 350, "y": 360, "halfW": 110, "halfH": 340, "dirX": 0, "dirY": 1, "strength": 150, "falloff": 40 }
+      ]
+    },
+    {
+      "id": "riptide",
+      "name": "Riptide (downcurrent stress)",
+      "fields": [
+        { "type": "zone", "shape": "rect", "x": 240, "y": 360, "halfW": 240, "halfH": 360, "dirX": 0.15, "dirY": 1, "strength": 170, "falloff": 50 }
+      ]
+    },
+    {
+      "id": "twin-eddies",
+      "name": "Twin Eddies",
+      "fields": [
+        { "type": "vortex", "x": 140, "y": 290, "radius": 105, "strength": 95, "direction": 1, "maxAccel": 88 },
+        { "type": "vortex", "x": 350, "y": 440, "radius": 105, "strength": 95, "direction": -1, "maxAccel": 88 }
+      ]
+    }
+  ]
+}

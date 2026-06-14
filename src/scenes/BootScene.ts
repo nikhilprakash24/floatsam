@@ -21,6 +21,7 @@ export class BootScene extends Phaser.Scene {
     this.makeSeal();
     this.makeOtter();
     this.makePuffer();
+    this.makeSeaLion();
     this.makeReefColumn();
     this.makeBubble();
     this.makeBackgrounds();
@@ -35,6 +36,8 @@ export class BootScene extends Phaser.Scene {
     // Default selection until the player picks (v3.3 §1).
     this.registry.set('modeId', 'classic');
     this.registry.set('characterId', 'seal');
+    this.registry.set('pace', 1);
+    this.registry.set('paceId', 'base');
 
     // Deep-link params: ?mode=&character= preselect; ?play=1 skips the menus
     // (used by e2e + shareable direct links); ?scene=sandbox opens the lab.
@@ -111,6 +114,41 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x6e5639);
     g.fillEllipse(34, 35, 14, 6);
     g.generateTexture('otter', 68, 44);
+    g.destroy();
+  }
+
+  /** Sea Lion: large, dark, eared — heavy·powerful bruiser (v3.3 roster). */
+  private makeSeaLion(): void {
+    const g = this.add.graphics();
+    // Hind flippers
+    g.fillStyle(0x5a4632);
+    g.fillTriangle(3, 13, 3, 39, 24, 26);
+    g.fillTriangle(3, 22, 12, 42, 24, 28);
+    // Bulky body
+    g.fillStyle(0x6f5740);
+    g.fillEllipse(38, 26, 60, 34);
+    // Thick neck + head
+    g.fillCircle(58, 19, 15);
+    // Belly
+    g.fillStyle(0x8a7259);
+    g.fillEllipse(34, 33, 42, 16);
+    // Long snout
+    g.fillStyle(0x5f4a36);
+    g.fillEllipse(68, 22, 14, 9);
+    g.fillStyle(0x1a120b);
+    g.fillCircle(73, 20, 2.2);
+    // External ear flaps (the sea-lion tell)
+    g.fillStyle(0x4f3d2b);
+    g.fillEllipse(52, 9, 5, 9);
+    // Whisker brow
+    g.fillStyle(0x1a120b);
+    g.fillCircle(59, 14, 3.2);
+    g.fillStyle(0xffffff);
+    g.fillCircle(60, 13, 1.1);
+    // Front flipper (large)
+    g.fillStyle(0x5a4632);
+    g.fillEllipse(40, 40, 22, 9);
+    g.generateTexture('sealion', 84, 52);
     g.destroy();
   }
 

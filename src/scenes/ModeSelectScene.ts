@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import difficulty from '../config/difficulty.json';
 import { MODES } from '../core/modes/modes';
+import { makeBackButton } from '../ui/Button';
 
 const W = difficulty.worldWidth;
 const H = difficulty.worldHeight;
@@ -34,13 +35,13 @@ export class ModeSelectScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     MODES.forEach((mode, i) => {
-      this.card(H * 0.32 + i * 175, mode.name, BLURB[mode.id] ?? '', () => {
+      this.card(H * 0.34 + i * 175, mode.name, BLURB[mode.id] ?? '', () => {
         this.registry.set('modeId', mode.id);
         this.scene.start('CharacterSelect');
       });
     });
 
-    this.backLink('◀ menu', () => this.scene.start('Menu'));
+    makeBackButton(this, '◀ tempo', () => this.scene.start('PaceSelect'));
   }
 
   private card(cy: number, title: string, blurb: string, onPick: () => void): void {
@@ -65,13 +66,5 @@ export class ModeSelectScene extends Phaser.Scene {
     c.on('pointerover', () => bg.setAlpha(1));
     c.on('pointerout', () => bg.setAlpha(0.9));
     c.on('pointerdown', onPick);
-  }
-
-  private backLink(label: string, onClick: () => void): void {
-    this.add
-      .text(14, H - 12, label, { fontFamily: FONT, fontSize: '17px', color: '#7fa8b8' })
-      .setOrigin(0, 1)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', onClick);
   }
 }

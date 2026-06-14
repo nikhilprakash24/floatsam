@@ -1,0 +1,16 @@
+{
+  "id": "sealion",
+  "name": "Sea Lion",
+  "massScale": 1.35,
+  "thrustScale": 1.4,
+  "dragScale": 1.15,
+  "buoyancyScale": 1.0,
+  "hitboxRadius": 24,
+  "card": {
+    "number": "04",
+    "role": "Bruiser",
+    "rarity": "epic",
+    "flavor": "A heavyweight with a thunderous push — slow to turn, impossible to stop.",
+    "traits": { "power": 5, "agility": 1, "glide": 2, "float": 2, "stealth": 1 }
+  }
+}

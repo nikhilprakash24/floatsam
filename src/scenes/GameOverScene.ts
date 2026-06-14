@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import difficulty from '../config/difficulty.json';
+import { makeButton } from '../ui/Button';
 
 const W = difficulty.worldWidth;
 const H = difficulty.worldHeight;
@@ -54,26 +55,6 @@ export class GameOverScene extends Phaser.Scene {
         .setOrigin(0.5),
     );
 
-    const retry = this.add
-      .text(0, 80, 'tap to retry', {
-        fontFamily: FONT,
-        fontSize: '24px',
-        color: '#ffd97a',
-      })
-      .setOrigin(0.5);
-    panel.add(retry);
-    this.tweens.add({ targets: retry, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
-
-    // Switch mode/creature instead of retrying the same pair.
-    const change = this.add
-      .text(W / 2, H * 0.42 + 122, 'change mode / creature', {
-        fontFamily: FONT,
-        fontSize: '18px',
-        color: '#9fd8cf',
-      })
-      .setOrigin(0.5)
-      .setDepth(2);
-
     panel.setScale(0.7).setAlpha(0);
     this.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
 
@@ -84,17 +65,25 @@ export class GameOverScene extends Phaser.Scene {
       this.scene.start(target);
     };
 
-    // Brief input guard so a death-tap doesn't instantly restart.
+    // Buttons appear after a brief guard so a death-tap can't instantly restart.
     this.time.delayedCall(350, () => {
-      change.setInteractive({ useHandCursor: true }).on(
-        'pointerdown',
-        (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
-          e.stopPropagation();
-          leave('ModeSelect');
-        },
-      );
       // GameScene.create owns the →PLAY transition.
-      this.input.once('pointerdown', () => leave('Game'));
+      const again = makeButton(this, W / 2, H * 0.42 + 78, '▶  PLAY AGAIN', () => leave('Game'), {
+        width: 240,
+        height: 54,
+        fontSize: 22,
+      }).setDepth(2);
+      const change = makeButton(this, W / 2, H * 0.42 + 142, 'change mode / creature', () => leave('ModeSelect'), {
+        variant: 'ghost',
+        width: 240,
+        height: 44,
+        fontSize: 17,
+        accent: 0x4aa3e0,
+      }).setDepth(2);
+      for (const b of [again, change]) {
+        b.setScale(0.8).setAlpha(0);
+        this.tweens.add({ targets: b, scale: 1, alpha: 1, duration: 160, ease: 'Back.easeOut' });
+      }
     });
   }
 }
