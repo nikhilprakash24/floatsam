@@ -63,9 +63,12 @@ async function simState(page: Page): Promise<SimState | undefined> {
   return page.evaluate(() => window.__sim);
 }
 
-/** Navigate, leave the menu, and tap until the run has actually started. */
+/**
+ * Deep-link straight into a deterministic Classic(Seal) run (?play=1 skips the
+ * mode/character menus) and tap once to start the world.
+ */
 async function startRun(page: Page, seed: number): Promise<void> {
-  await page.goto(`/?seed=${seed}`);
+  await page.goto(`/?play=1&mode=classic&character=seal&seed=${seed}`);
   await expect(page.locator('canvas')).toBeVisible();
   for (let i = 0; i < 30; i++) {
     await tapCanvas(page);
@@ -134,10 +137,41 @@ test('best score persists across a reload', async ({ page }) => {
   expect(score).toBeGreaterThanOrEqual(1);
   await expect.poll(async () => (await simState(page))?.phase, { timeout: 30_000 }).toBe('OVER');
 
-  const stored = await page.evaluate(() => window.localStorage.getItem('uf.bestScore'));
+  // Best score is now keyed per (mode, character).
+  const KEY = 'uf.best.classic.seal';
+  const stored = await page.evaluate((k) => window.localStorage.getItem(k), KEY);
   expect(Number(stored)).toBeGreaterThanOrEqual(1);
 
   await page.reload();
-  const after = await page.evaluate(() => window.localStorage.getItem('uf.bestScore'));
+  const after = await page.evaluate((k) => window.localStorage.getItem(k), KEY);
   expect(after).toBe(stored);
+});
+
+test('menu advances into the mode/character select flow', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('canvas')).toBeVisible();
+  await page.waitForTimeout(400);
+  // A menu tap must NOT start a run — it enters ModeSelect (no sim yet).
+  await tapCanvas(page);
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => window.__sim)).toBeUndefined();
+});
+
+test('Dive mode: holding the bottom half actively dives downward', async ({ page }) => {
+  await page.goto('/?play=1&mode=dive&character=seal');
+  await expect(page.locator('canvas')).toBeVisible();
+  await tapCanvas(page); // start the world
+  const y0 = (await simState(page))!.y;
+
+  // Real pointer held in the lower half → sustained T_down.
+  await page.mouse.move(240, 612);
+  await page.mouse.down();
+  await page.waitForTimeout(700);
+  const s = (await simState(page))!;
+  await page.mouse.up();
+
+  // Robust to frame rate: assert it is *actively* diving (passive drift is
+  // ~12 px/s near-neutral), not just a displacement threshold.
+  expect(s.vy).toBeGreaterThan(60);
+  expect(s.y).toBeGreaterThan(y0);
 });

@@ -60,11 +60,10 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.tweens.add({ targets: start, alpha: 0.4, duration: 650, yoyo: true, repeat: -1 });
 
-    const best = this.registry.get('best') as number;
     this.add
-      .text(W / 2, H * 0.74, `best: ${best}`, {
+      .text(W / 2, H * 0.74, 'classic · dive · seal · otter', {
         fontFamily: FONT,
-        fontSize: '22px',
+        fontSize: '18px',
         color: '#bfdde8',
       })
       .setOrigin(0.5);
@@ -83,8 +82,8 @@ export class MenuScene extends Phaser.Scene {
       },
     );
 
-    // GameScene.create owns the →PLAY transition.
-    this.input.once('pointerdown', () => this.scene.start('Game'));
+    // Into the mode → character selection flow.
+    this.input.once('pointerdown', () => this.scene.start('ModeSelect'));
 
     // Physics sandbox entry (Phase 1 tooling, kept for tuning sessions).
     this.add

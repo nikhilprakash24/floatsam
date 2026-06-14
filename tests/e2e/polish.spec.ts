@@ -27,7 +27,8 @@ test('mute toggle persists across reload', async ({ page }) => {
 });
 
 test('game pauses when the tab is hidden and resumes on tap', async ({ page }) => {
-  await page.goto('/?seed=42');
+  // Deep-link straight into a Classic(Seal) run (skip the select menus).
+  await page.goto('/?play=1&mode=classic&character=seal&seed=42');
   await expect(page.locator('canvas')).toBeVisible();
   // Start a run.
   for (let i = 0; i < 30; i++) {

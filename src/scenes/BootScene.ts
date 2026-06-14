@@ -19,6 +19,7 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.makeSeal();
+    this.makeOtter();
     this.makeReefColumn();
     this.makeBubble();
     this.makeBackgrounds();
@@ -30,9 +31,19 @@ export class BootScene extends Phaser.Scene {
     this.registry.set('best', Number(store.get(BEST_SCORE_KEY) ?? 0));
     this.registry.set('sfx', new SfxSynth(store));
     this.registry.set('appState', transition('BOOT', 'MENU'));
+    // Default selection until the player picks (v3.3 §1).
+    this.registry.set('modeId', 'classic');
+    this.registry.set('characterId', 'seal');
 
+    // Deep-link params: ?mode=&character= preselect; ?play=1 skips the menus
+    // (used by e2e + shareable direct links); ?scene=sandbox opens the lab.
     const params = new URLSearchParams(window.location.search);
-    this.scene.start(params.get('scene') === 'sandbox' ? 'Sandbox' : 'Menu');
+    if (params.get('mode')) this.registry.set('modeId', params.get('mode'));
+    if (params.get('character')) this.registry.set('characterId', params.get('character'));
+
+    if (params.get('scene') === 'sandbox') this.scene.start('Sandbox');
+    else if (params.get('play') === '1') this.scene.start('Game');
+    else this.scene.start('Menu');
   }
 
   private makeSeal(): void {
@@ -63,6 +74,42 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x86a0b0);
     g.fillEllipse(36, 37, 16, 7);
     g.generateTexture('seal', 72, 48);
+    g.destroy();
+  }
+
+  /** Otter: smaller, sleeker, brown — light·agile·weak-flap (v3.3 roster). */
+  private makeOtter(): void {
+    const g = this.add.graphics();
+    // Tail (longer, tapered)
+    g.fillStyle(0x6e5639);
+    g.fillTriangle(2, 18, 2, 30, 20, 24);
+    // Body (slimmer than the seal)
+    g.fillStyle(0x8a6f4a);
+    g.fillEllipse(34, 24, 50, 24);
+    // Head
+    g.fillCircle(52, 20, 11);
+    // Belly
+    g.fillStyle(0xc7ad86);
+    g.fillEllipse(31, 29, 34, 11);
+    // Muzzle
+    g.fillStyle(0xa98a5e);
+    g.fillEllipse(59, 22, 10, 7);
+    // Nose
+    g.fillStyle(0x2a2018);
+    g.fillCircle(63, 21, 2);
+    // Ears
+    g.fillStyle(0x6e5639);
+    g.fillCircle(47, 12, 3);
+    g.fillCircle(55, 11, 3);
+    // Eye
+    g.fillStyle(0x1c140d);
+    g.fillCircle(53, 16, 2.6);
+    g.fillStyle(0xffffff);
+    g.fillCircle(54, 15, 0.9);
+    // Front paw
+    g.fillStyle(0x6e5639);
+    g.fillEllipse(34, 35, 14, 6);
+    g.generateTexture('otter', 68, 44);
     g.destroy();
   }
 

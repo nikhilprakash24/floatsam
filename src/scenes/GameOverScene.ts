@@ -64,18 +64,37 @@ export class GameOverScene extends Phaser.Scene {
     panel.add(retry);
     this.tweens.add({ targets: retry, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
 
+    // Switch mode/creature instead of retrying the same pair.
+    const change = this.add
+      .text(W / 2, H * 0.42 + 122, 'change mode / creature', {
+        fontFamily: FONT,
+        fontSize: '18px',
+        color: '#9fd8cf',
+      })
+      .setOrigin(0.5)
+      .setDepth(2);
+
     panel.setScale(0.7).setAlpha(0);
     this.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
 
+    const leave = (target: string): void => {
+      this.scene.stop('Hud');
+      this.scene.stop('Game');
+      this.scene.stop();
+      this.scene.start(target);
+    };
+
     // Brief input guard so a death-tap doesn't instantly restart.
     this.time.delayedCall(350, () => {
-      this.input.once('pointerdown', () => {
-        // GameScene.create owns the →PLAY transition.
-        this.scene.stop('Hud');
-        this.scene.stop('Game');
-        this.scene.stop();
-        this.scene.start('Game');
-      });
+      change.setInteractive({ useHandCursor: true }).on(
+        'pointerdown',
+        (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+          e.stopPropagation();
+          leave('ModeSelect');
+        },
+      );
+      // GameScene.create owns the →PLAY transition.
+      this.input.once('pointerdown', () => leave('Game'));
     });
   }
 }

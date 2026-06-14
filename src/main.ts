@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import difficulty from './config/difficulty.json';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
+import { ModeSelectScene } from './scenes/ModeSelectScene';
+import { CharacterSelectScene } from './scenes/CharacterSelectScene';
 import { GameScene } from './scenes/GameScene';
 import { HudScene } from './scenes/HudScene';
 import { GameOverScene } from './scenes/GameOverScene';
@@ -31,5 +33,15 @@ new Phaser.Game({
   // Arcade stays registered for §2 stack parity, but all gameplay physics is
   // the custom fluid core — see src/core/fluid.
   physics: { default: 'arcade' },
-  scene: [BootScene, MenuScene, GameScene, HudScene, GameOverScene, PauseScene, SandboxScene],
+  scene: [
+    BootScene,
+    MenuScene,
+    ModeSelectScene,
+    CharacterSelectScene,
+    GameScene,
+    HudScene,
+    GameOverScene,
+    PauseScene,
+    SandboxScene,
+  ],
 });

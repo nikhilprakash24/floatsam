@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import difficultyJson from '../config/difficulty.json';
 import { Simulation } from '../core/sim/Simulation';
-import { CLASSIC_MODE } from '../core/modes/classicMode';
-import { SEAL } from '../core/character/CharacterProfile';
+import { modeById } from '../core/modes/modes';
+import { characterById } from '../core/character/CharacterProfile';
+import type { GameMode } from '../core/modes/GameMode';
 import { scrollSpeedFor } from '../core/spawn/Spawner';
 import { transition } from '../core/state/fsm';
-import { BEST_SCORE_KEY } from '../core/score/score';
+import { bestKeyFor } from '../core/score/score';
 import type { KVStore } from '../platform/Storage';
 import type { SfxSynth } from '../platform/audio';
 import { PlayerView } from '../entities/PlayerView';
@@ -29,6 +30,8 @@ export class GameScene extends Phaser.Scene {
   private sfx!: SfxSynth;
   private fx: Phaser.GameObjects.GameObject[] = [];
   private fxChecked = false;
+  private mode!: GameMode;
+  private bestKey!: string;
 
   constructor() {
     super('Game');
@@ -39,10 +42,19 @@ export class GameScene extends Phaser.Scene {
     this.started = false;
     this.overLaunched = false;
 
+    const mode = modeById(this.registry.get('modeId') as string);
+    const character = characterById(this.registry.get('characterId') as string);
+    this.mode = mode;
+
+    // Per-(mode, character) best score (v3.3 §4.3).
+    this.bestKey = bestKeyFor(mode.id, character.id);
+    const store = this.registry.get('store') as KVStore;
+    this.registry.set('best', Number(store.get(this.bestKey) ?? 0));
+
     // ?seed=N gives deterministic runs for e2e and debugging.
     const urlSeed = Number(new URLSearchParams(window.location.search).get('seed'));
     const seed = urlSeed > 0 ? urlSeed : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
-    this.sim = new Simulation(CLASSIC_MODE, SEAL, seed, {
+    this.sim = new Simulation(mode, character, seed, {
       onScore: (score) => {
         this.registry.set('score', score);
         this.sfx.score();
@@ -62,7 +74,7 @@ export class GameScene extends Phaser.Scene {
 
     this.add.image(D.worldWidth / 2, D.worldHeight - 24, 'sand').setDepth(6);
 
-    this.player = new PlayerView(this, D.playerX, D.worldHeight * 0.42);
+    this.player = new PlayerView(this, D.playerX, D.worldHeight * 0.42, character.id);
 
     this.bubbles = this.add.particles(0, 0, 'bubble', {
       speedY: { min: -60, max: -25 },
@@ -76,12 +88,13 @@ export class GameScene extends Phaser.Scene {
     });
     this.bubbles.setDepth(9);
 
-    // Idle hint until the first tap starts the run.
+    // Idle hint until the first input starts the run.
     const hint = this.add
-      .text(D.worldWidth / 2, D.worldHeight * 0.62, 'tap to swim', {
+      .text(D.worldWidth / 2, D.worldHeight * 0.62, mode.biaxial ? 'hold top to rise\nhold bottom to dive' : 'tap to swim', {
         fontFamily: '"Trebuchet MS", sans-serif',
         fontSize: '26px',
         color: '#cfe9f2',
+        align: 'center',
       })
       .setOrigin(0.5)
       .setDepth(20);
@@ -96,7 +109,9 @@ export class GameScene extends Phaser.Scene {
         this.started = true;
         hint.destroy();
       }
-      if (this.sim.phase === 'PLAY') {
+      // Classic: each press is a discrete swim impulse. Dive: presses just
+      // start; rise/dive is driven by where the pointer is HELD (see update()).
+      if (!this.mode.biaxial && this.sim.phase === 'PLAY') {
         this.sim.tap();
         this.sfx.tap();
         this.player.pulse(this);
@@ -166,15 +181,27 @@ export class GameScene extends Phaser.Scene {
       gate: nextGate ? { x: nextGate.x, c: nextGate.gapCenterY, gap: nextGate.gapSize } : null,
     };
 
-    // Hold the world still until the first tap (classic flappy idle).
+    // Hold the world still until the first input (classic flappy idle).
     if (!this.started) {
       this.layoutGates();
-      this.player.update(D.playerX, D.worldHeight * 0.42 + Math.sin(this.time.now / 400) * 8, 0, scrollSpeedFor(0, D));
+      this.player.update(D.playerX, D.worldHeight * 0.42 + Math.sin(this.time.now / 400) * 8, 0, scrollSpeedFor(0, this.sim.difficulty));
       return;
     }
 
+    // Dive: feed held intent from the pointer's vertical half each frame.
+    if (this.mode.biaxial) {
+      const ptr = this.input.activePointer;
+      const holding = ptr.isDown && this.sim.phase === 'PLAY';
+      const up = holding && ptr.worldY < D.worldHeight / 2;
+      const down = holding && ptr.worldY >= D.worldHeight / 2;
+      this.sim.setHold(up, down);
+      if (holding && this.sim.frame % 10 === 0) {
+        this.bubbles.emitParticleAt(this.player.sprite.x - 26, this.player.sprite.y, 1);
+      }
+    }
+
     const alpha = this.sim.advance(delta);
-    const speed = scrollSpeedFor(this.sim.score, D);
+    const speed = scrollSpeedFor(this.sim.score, this.sim.difficulty);
 
     // One-shot FPS probe ~6 s into the run: drop effects on weak devices.
     if (!this.fxChecked && this.sim.time > 6) {
@@ -215,7 +242,7 @@ export class GameScene extends Phaser.Scene {
     const best = this.registry.get('best') as number;
     if (this.sim.score > best) {
       this.registry.set('best', this.sim.score);
-      (this.registry.get('store') as KVStore).set(BEST_SCORE_KEY, String(this.sim.score));
+      (this.registry.get('store') as KVStore).set(this.bestKey, String(this.sim.score));
     }
   }
 
