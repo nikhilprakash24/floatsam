@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Simulation } from '../../src/core/sim/Simulation';
-import { DIFFICULTY, PHYSICS } from '../helpers';
+import type { Simulation } from '../../src/core/sim/Simulation';
+import { DIFFICULTY, makeClassicSealSim } from '../helpers';
 
 /**
  * Reference bot: a deliberately simple threshold controller. If THIS can pass
@@ -41,7 +41,7 @@ describe('fairness — 10,000 seeded runs (G2 acceptance)', () => {
     () => {
       const failures: { seed: number; score: number }[] = [];
       for (let seed = 1; seed <= RUNS; seed++) {
-        const sim = new Simulation(PHYSICS, DIFFICULTY, seed);
+        const sim = makeClassicSealSim(seed);
         let frames = 0;
         while (sim.phase === 'PLAY' && sim.score < GATES_PER_RUN && frames < MAX_FRAMES) {
           if (botShouldTap(sim)) sim.tap();
@@ -57,7 +57,7 @@ describe('fairness — 10,000 seeded runs (G2 acceptance)', () => {
   it('difficulty curve stays inside fair bounds deep into a run (score 60)', () => {
     // At score 60 the curve is fully saturated; the spawner unit tests prove
     // the clamp holds at saturation, this is the integration spot-check.
-    const sim = new Simulation(PHYSICS, DIFFICULTY, 8);
+    const sim = makeClassicSealSim(8);
     let frames = 0;
     while (sim.phase === 'PLAY' && sim.score < 25 && frames < MAX_FRAMES) {
       if (botShouldTap(sim)) sim.tap();

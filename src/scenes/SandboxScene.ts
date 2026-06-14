@@ -1,14 +1,9 @@
 import Phaser from 'phaser';
 import physicsJson from '../config/physics.json';
 import difficulty from '../config/difficulty.json';
-import {
-  applySwimImpulse,
-  createBody,
-  stepBody,
-  terminalSpeed,
-  type FluidBodyState,
-} from '../core/fluid/FluidBody';
+import { createBody, stepBody, terminalSpeed, type FluidBodyState } from '../core/fluid/FluidBody';
 import { ConstantBuoyancyField } from '../core/fluid/FluidField';
+import { TapUpPolicy } from '../core/input/TapUpPolicy';
 import { PlayerView } from '../entities/PlayerView';
 
 const W = difficulty.worldWidth;
@@ -34,6 +29,7 @@ export class SandboxScene extends Phaser.Scene {
   private body!: FluidBodyState;
   private prev!: FluidBodyState;
   private field = new ConstantBuoyancyField(this.cfg.buoyancyAccel);
+  private policy = new TapUpPolicy(this.cfg);
   private player!: PlayerView;
   private accumulator = 0;
   private simTime = 0;
@@ -47,6 +43,7 @@ export class SandboxScene extends Phaser.Scene {
   create(): void {
     this.cfg = { ...physicsJson };
     this.field = new ConstantBuoyancyField(this.cfg.buoyancyAccel);
+    this.policy = new TapUpPolicy(this.cfg);
     this.body = createBody(W * 0.4, H * 0.4);
     this.prev = this.body;
     this.accumulator = 0;
@@ -77,7 +74,7 @@ export class SandboxScene extends Phaser.Scene {
       });
 
     this.input.on('pointerdown', () => {
-      this.body = applySwimImpulse(this.body, this.cfg);
+      this.policy.press();
       this.player.pulse(this);
     });
 
@@ -90,7 +87,7 @@ export class SandboxScene extends Phaser.Scene {
     while (this.accumulator >= this.cfg.fixedStep) {
       this.accumulator -= this.cfg.fixedStep;
       this.prev = this.body;
-      this.body = stepBody(this.body, this.cfg, this.field, this.simTime);
+      this.body = stepBody(this.body, this.cfg, this.field, this.simTime, this.policy.step(this.cfg.fixedStep));
       this.simTime += this.cfg.fixedStep;
       // Sandbox never kills: wrap softly at floor/surface.
       const r = difficulty.playerRadius;

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import physicsJson from '../config/physics.json';
 import difficultyJson from '../config/difficulty.json';
 import { Simulation } from '../core/sim/Simulation';
+import { CLASSIC_MODE } from '../core/modes/classicMode';
 import { scrollSpeedFor } from '../core/spawn/Spawner';
 import { transition } from '../core/state/fsm';
 import { BEST_SCORE_KEY } from '../core/score/score';
@@ -41,7 +41,7 @@ export class GameScene extends Phaser.Scene {
     // ?seed=N gives deterministic runs for e2e and debugging.
     const urlSeed = Number(new URLSearchParams(window.location.search).get('seed'));
     const seed = urlSeed > 0 ? urlSeed : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
-    this.sim = new Simulation(physicsJson, D, seed, {
+    this.sim = new Simulation(CLASSIC_MODE, seed, {
       onScore: (score) => {
         this.registry.set('score', score);
         this.sfx.score();

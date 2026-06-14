@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Simulation, circleRectOverlap } from '../../src/core/sim/Simulation';
-import { DIFFICULTY, PHYSICS } from '../helpers';
+import { circleRectOverlap } from '../../src/core/sim/Simulation';
+import { DIFFICULTY, PHYSICS, makeClassicSealSim } from '../helpers';
 
 describe('circleRectOverlap precision', () => {
   it('detects overlap on edges and corners', () => {
@@ -19,7 +19,7 @@ describe('circleRectOverlap precision', () => {
 describe('Simulation death conditions', () => {
   it('dies on the seabed when never tapping', () => {
     // Push the first gate far away so the seabed is the only hazard.
-    const sim = new Simulation(PHYSICS, { ...DIFFICULTY, firstGateX: 50_000 }, 42);
+    const sim = makeClassicSealSim(42, undefined, { firstGateX: 50_000 });
     let frames = 0;
     while (sim.phase === 'PLAY' && frames < 60 * 30) {
       sim.tick();
@@ -30,7 +30,7 @@ describe('Simulation death conditions', () => {
   });
 
   it('hitbox is tighter than the sprite (~80%)', () => {
-    const sim = new Simulation(PHYSICS, DIFFICULTY, 1);
+    const sim = makeClassicSealSim(1);
     expect(sim.hitboxRadius).toBeCloseTo(
       DIFFICULTY.playerRadius * PHYSICS.playerHitboxScale,
       10,
@@ -39,7 +39,7 @@ describe('Simulation death conditions', () => {
   });
 
   it('death transitions PLAY→DEAD→OVER with the slow-mo beat (~300 ms real time)', () => {
-    const sim = new Simulation(PHYSICS, DIFFICULTY, 42);
+    const sim = makeClassicSealSim(42);
     while (sim.phase === 'PLAY') sim.tick();
     expect(sim.phase).toBe('DEAD');
     sim.advance(DIFFICULTY.deathSlowmoMs - 50);
@@ -49,12 +49,12 @@ describe('Simulation death conditions', () => {
   });
 
   it('taps are ignored once dead', () => {
-    const sim = new Simulation(PHYSICS, DIFFICULTY, 42);
+    const sim = makeClassicSealSim(42);
     while (sim.phase === 'PLAY') sim.tick();
     const vyAtDeath = sim.body.vy;
     sim.tap();
     sim.tick();
-    expect(sim.body.pendingImpulse).toBe(0);
+    expect(sim.pendingImpulse).toBe(0);
     expect(sim.body.vy).toBeGreaterThanOrEqual(Math.min(vyAtDeath, 0));
   });
 });

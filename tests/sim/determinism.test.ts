@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { Simulation } from '../../src/core/sim/Simulation';
-import { DIFFICULTY, PHYSICS } from '../helpers';
+import type { Simulation } from '../../src/core/sim/Simulation';
+import { makeClassicSealSim } from '../helpers';
 
 function run(seed: number, tapFrames: Set<number>, frames: number): Simulation {
-  const sim = new Simulation(PHYSICS, DIFFICULTY, seed);
+  const sim = makeClassicSealSim(seed);
   for (let f = 0; f < frames; f++) {
     if (tapFrames.has(f)) sim.tap();
     sim.tick();

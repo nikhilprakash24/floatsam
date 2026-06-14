@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  applySwimImpulse,
-  createBody,
-  dragAccel,
-  stepBody,
-  terminalSpeed,
-} from '../../src/core/fluid/FluidBody';
+import { createBody, dragAccel, stepBody, terminalSpeed } from '../../src/core/fluid/FluidBody';
 import { ConstantBuoyancyField } from '../../src/core/fluid/FluidField';
 import { PHYSICS } from '../helpers';
 
@@ -37,44 +31,23 @@ describe('terminalSpeed', () => {
   });
 });
 
-describe('applySwimImpulse', () => {
-  it('queues the configured impulse', () => {
-    const b = applySwimImpulse(createBody(0, 0), PHYSICS);
-    expect(b.pendingImpulse).toBe(PHYSICS.swimImpulse);
-  });
-
-  it('tops up rather than stacking unboundedly on tap spam', () => {
-    let b = applySwimImpulse(createBody(0, 0), PHYSICS);
-    b = applySwimImpulse(b, PHYSICS);
-    b = applySwimImpulse(b, PHYSICS);
-    expect(b.pendingImpulse).toBe(PHYSICS.swimImpulse);
-  });
-
-  it('does not mutate its input (pure)', () => {
-    const before = createBody(0, 0);
-    applySwimImpulse(before, PHYSICS);
-    expect(before.pendingImpulse).toBe(0);
-  });
-});
-
-describe('stepBody', () => {
-  it('blends the impulse over swimBlendSteps, never instantly (§4.1)', () => {
-    let b = applySwimImpulse(createBody(0, 300), PHYSICS);
-    const perStep = PHYSICS.swimImpulse / PHYSICS.swimBlendSteps;
+describe('stepBody (integrator)', () => {
+  it('applies thrust as a direct velocity delta, never instantly to terminal (§4.1)', () => {
+    let b = createBody(0, 300);
+    const slice = PHYSICS.swimImpulse / PHYSICS.swimBlendSteps;
     for (let i = 0; i < PHYSICS.swimBlendSteps; i++) {
       const before = b.vy;
-      b = stepBody(b, PHYSICS, field, 0);
-      // Velocity change per step is bounded by the blended slice + ambient forces.
-      expect(Math.abs(b.vy - before)).toBeLessThan(perStep + 30);
+      b = stepBody(b, PHYSICS, field, 0, { dvx: 0, dvy: -slice });
+      // Velocity change per step is bounded by the slice + ambient forces.
+      expect(Math.abs(b.vy - before)).toBeLessThan(slice + 30);
     }
-    expect(b.pendingImpulse).toBeCloseTo(0, 6);
   });
 
   it('clamps rise speed asymmetrically', () => {
     let b = createBody(0, 300);
+    const slice = PHYSICS.swimImpulse / PHYSICS.swimBlendSteps;
     for (let i = 0; i < 60; i++) {
-      b = applySwimImpulse(b, PHYSICS);
-      b = stepBody(b, PHYSICS, field, 0);
+      b = stepBody(b, PHYSICS, field, 0, { dvx: 0, dvy: -slice });
     }
     expect(b.vy).toBeGreaterThanOrEqual(-PHYSICS.maxRiseSpeed - 1e-9);
   });
@@ -83,6 +56,23 @@ describe('stepBody', () => {
     let b = { ...createBody(0, 0), vy: 10_000 };
     b = stepBody(b, PHYSICS, field, 0);
     expect(b.vy).toBeLessThanOrEqual(PHYSICS.maxSinkSpeed);
+  });
+
+  it('massScale divides continuous-force acceleration but not thrust', () => {
+    // Heavier body (massScale 2) sinks slower under gravity over one step.
+    const light = stepBody(createBody(0, 100), PHYSICS, field, 0, { dvx: 0, dvy: 0 }, 1);
+    const heavy = stepBody(createBody(0, 100), PHYSICS, field, 0, { dvx: 0, dvy: 0 }, 2);
+    expect(Math.abs(heavy.vy)).toBeLessThan(Math.abs(light.vy));
+    // Thrust Δv is identical regardless of mass (it is a velocity delta).
+    const a = stepBody(createBody(0, 100), PHYSICS, field, 0, { dvx: 0, dvy: -50 }, 1).vy;
+    const b = stepBody(createBody(0, 100), PHYSICS, field, 0, { dvx: 0, dvy: -50 }, 1).vy;
+    expect(a).toBe(b);
+  });
+
+  it('massScale of 1 is bit-identical to no scaling (the Seal invariant)', () => {
+    const withScale = stepBody(createBody(7, 123), PHYSICS, field, 0, { dvx: 0, dvy: -33 }, 1);
+    const without = stepBody(createBody(7, 123), PHYSICS, field, 0, { dvx: 0, dvy: -33 });
+    expect(withScale).toEqual(without);
   });
 
   it('is pure — input state untouched', () => {

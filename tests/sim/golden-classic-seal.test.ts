@@ -68,7 +68,7 @@ function capture(): Frame[] {
       y: sim.body.y,
       vx: sim.body.vx,
       vy: sim.body.vy,
-      pend: sim.body.pendingImpulse,
+      pend: sim.pendingImpulse,
       score: sim.score,
       phase: sim.phase,
       gsum,

@@ -1,15 +1,13 @@
-import {
-  applySwimImpulse,
-  createBody,
-  stepBody,
-  type FluidBodyState,
-  type FluidPhysicsConfig,
-} from '../fluid/FluidBody';
-import { ConstantBuoyancyField, type FluidField } from '../fluid/FluidField';
+import physicsJson from '../../config/physics.json';
+import { createBody, stepBody, type FluidBodyState, type FluidPhysicsConfig } from '../fluid/FluidBody';
+import type { FluidField } from '../fluid/FluidField';
+import type { InputPolicy } from '../input/InputPolicy';
+import type { GameMode } from '../modes/GameMode';
 import { GateSpawner, type DifficultyConfig, type Gate } from '../spawn/Spawner';
 import { collectPassedGates } from '../score/score';
 import { createRng } from '../rng';
 
+/** The umbrella shape of physics.json (integrator + render/hitbox extras). */
 export interface PhysicsConfigFull extends FluidPhysicsConfig {
   rotationLerp: number;
   maxTiltDeg: number;
@@ -42,9 +40,14 @@ export function circleRectOverlap(
 }
 
 /**
- * The whole game, headless. Fixed 1/60 s steps behind an accumulator;
- * rendering interpolates between prev and current states. Identical seed +
- * identical tap frames ⇒ identical run (ARCHITECTURE.md §3 rule 3).
+ * The whole game, headless, parameterized by a GameMode (v3.3 §3.2). Fixed
+ * 1/60 s steps behind an accumulator; rendering interpolates. Determinism is
+ * keyed per (seed, mode[, character]) — identical inputs reproduce identical
+ * runs (§3.1 rule 3). FluidBody is the only integrator (rule 4).
+ *
+ * Step-1 scope: the character is the implicit identity (massScale 1, effective
+ * config = mode.physics, hitbox from the shipped 0.8 rule), so Classic remains
+ * bit-identical. Step 2 swaps in a CharacterProfile + deriveEffective.
  */
 export class Simulation {
   body: FluidBodyState;
@@ -55,29 +58,55 @@ export class Simulation {
   /** Sim time, seconds, advances only with fixed steps. */
   time = 0;
   frame = 0;
+  readonly hitboxRadius: number;
+  /** Effective continuous-force config (mode × character). */
+  readonly physics: FluidPhysicsConfig;
+  readonly difficulty: DifficultyConfig;
 
   private accumulator = 0;
-  private tapQueued = false;
+  private pressQueued = false;
+  private holdUp = false;
+  private holdDown = false;
   private deadTimerMs = 0;
   private readonly field: FluidField;
-  readonly hitboxRadius: number;
+  private readonly policy: InputPolicy;
+  private readonly massScale: number;
 
   constructor(
-    readonly physics: PhysicsConfigFull,
-    readonly difficulty: DifficultyConfig,
+    readonly mode: GameMode,
     seed: number,
     private readonly events: SimEvents = {},
   ) {
-    this.field = new ConstantBuoyancyField(physics.buoyancyAccel);
-    this.spawner = new GateSpawner(difficulty, createRng(seed));
-    this.body = createBody(difficulty.playerX, difficulty.worldHeight * 0.42);
+    const eff = mode.physics;
+    this.physics = eff;
+    this.difficulty = mode.spawn;
+    this.massScale = 1;
+    this.field = mode.makeField(eff);
+    this.policy = mode.makeInputPolicy(eff);
+    this.spawner = new GateSpawner(mode.spawn, createRng(seed));
+    this.body = createBody(mode.spawn.playerX, mode.spawn.worldHeight * 0.42);
     this.prevBody = this.body;
-    this.hitboxRadius = difficulty.playerRadius * physics.playerHitboxScale;
+    this.hitboxRadius = mode.spawn.playerRadius * physicsJson.playerHitboxScale;
   }
 
-  /** Queue a tap; consumed at the next fixed step so runs stay deterministic. */
+  /** Queue a discrete press (Classic tap); consumed at the next fixed step. */
   tap(): void {
-    if (this.phase === 'PLAY') this.tapQueued = true;
+    if (this.phase === 'PLAY') this.pressQueued = true;
+  }
+
+  /** Set held intent (BiAxial up/down); takes effect from the next step. */
+  setHold(up: boolean, down: boolean): void {
+    this.holdUp = up && this.phase === 'PLAY';
+    this.holdDown = down && this.phase === 'PLAY';
+  }
+
+  /** Current impulse reservoir (telemetry/replay observability). */
+  get pendingImpulse(): number {
+    return this.policy.reservoir();
+  }
+
+  get fixedStep(): number {
+    return this.physics.fixedStep;
   }
 
   /**
@@ -110,11 +139,13 @@ export class Simulation {
     if (this.phase === 'OVER') return;
     this.prevBody = this.body;
 
-    if (this.tapQueued) {
-      this.body = applySwimImpulse(this.body, this.physics);
-      this.tapQueued = false;
+    if (this.pressQueued) {
+      this.policy.press();
+      this.pressQueued = false;
     }
-    this.body = stepBody(this.body, this.physics, this.field, this.time);
+    this.policy.setHold(this.holdUp, this.holdDown);
+    const thrust = this.policy.step(this.physics.fixedStep);
+    this.body = stepBody(this.body, this.physics, this.field, this.time, thrust, this.massScale);
 
     // Water surface: soft ceiling — clamp position, kill upward velocity.
     const surfaceY = this.hitboxRadius;
