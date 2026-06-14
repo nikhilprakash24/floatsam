@@ -14,6 +14,8 @@ import type { GameMode } from './GameMode';
  */
 export const CLASSIC_MODE: GameMode = {
   id: 'classic',
+  name: 'Classic',
+  biaxial: false,
   physics: physicsJson as FluidPhysicsConfig,
   spawn: difficultyJson as DifficultyConfig,
   makeField: (eff) => new ConstantBuoyancyField(eff.buoyancyAccel),

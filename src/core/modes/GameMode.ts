@@ -12,6 +12,10 @@ import type { DifficultyConfig } from '../spawn/Spawner';
  */
 export interface GameMode {
   readonly id: string;
+  /** Display name for the mode-select menu. */
+  readonly name: string;
+  /** True if the mode uses bidirectional thrust (Dive/Lab) vs tap-up (Classic). */
+  readonly biaxial: boolean;
   /** Base continuous-force tuning for this mode (pre-character-scaling). */
   readonly physics: FluidPhysicsConfig;
   /** Spawn / difficulty profile (pre-character clamp derivation). */

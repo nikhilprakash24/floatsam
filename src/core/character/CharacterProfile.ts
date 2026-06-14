@@ -1,4 +1,5 @@
 import sealJson from '../../config/characters/seal.json';
+import otterJson from '../../config/characters/otter.json';
 import type { FluidPhysicsConfig } from '../fluid/FluidBody';
 
 /**
@@ -26,6 +27,8 @@ export interface CharacterProfile {
 export interface EffectivePhysics extends FluidPhysicsConfig {
   massScale: number;
   hitboxRadius: number;
+  /** Passed through so BiAxial thrust can scale T_up/T_down by flap power. */
+  thrustScale: number;
 }
 
 /**
@@ -49,7 +52,16 @@ export function deriveEffective(base: FluidPhysicsConfig, c: CharacterProfile): 
     fixedStep: base.fixedStep,
     massScale: c.massScale,
     hitboxRadius: c.hitboxRadius,
+    thrustScale: c.thrustScale,
   };
 }
 
 export const SEAL: CharacterProfile = sealJson;
+export const OTTER: CharacterProfile = otterJson;
+
+/** Selectable roster (v3.3 §1). Pure data — a creature is JSON + sprites. */
+export const CHARACTERS: readonly CharacterProfile[] = [SEAL, OTTER];
+
+export function characterById(id: string | null | undefined): CharacterProfile {
+  return CHARACTERS.find((c) => c.id === id) ?? SEAL;
+}

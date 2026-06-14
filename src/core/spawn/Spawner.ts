@@ -43,15 +43,27 @@ export function gapSizeFor(score: number, cfg: DifficultyConfig): number {
  * player; off-screen gates are recycled to the right edge with fresh,
  * fairness-clamped gap parameters — no allocation during play.
  */
+export interface SpawnClamps {
+  maxRisePerSecond: number;
+  maxSinkPerSecond: number;
+}
+
 export class GateSpawner {
   readonly gates: Gate[] = [];
   private lastGapCenterY: number;
   private nextId = 0;
+  private readonly clampUp: number;
+  private readonly clampDown: number;
 
   constructor(
     private readonly cfg: DifficultyConfig,
     private readonly rng: Rng,
+    clamps?: SpawnClamps,
   ) {
+    // Per-(character × mode) reachability clamps; defaults to the config's own
+    // values so direct construction (unit tests) keeps the shipped behavior.
+    this.clampUp = clamps?.maxRisePerSecond ?? cfg.maxRisePerSecond;
+    this.clampDown = clamps?.maxSinkPerSecond ?? cfg.maxSinkPerSecond;
     this.lastGapCenterY = (cfg.gapCenterMinY + cfg.gapCenterMaxY) / 2;
     const poolSize = Math.ceil(cfg.worldWidth / cfg.spawnSpacing) + 2;
     for (let i = 0; i < poolSize; i++) {
@@ -67,8 +79,8 @@ export class GateSpawner {
   private nextGapCenter(score: number, gapSize: number): number {
     const speed = scrollSpeedFor(score, this.cfg);
     const t = this.cfg.spawnSpacing / speed;
-    const maxUp = this.cfg.maxRisePerSecond * t * this.cfg.fairnessSafety;
-    const maxDown = this.cfg.maxSinkPerSecond * t * this.cfg.fairnessSafety;
+    const maxUp = this.clampUp * t * this.cfg.fairnessSafety;
+    const maxDown = this.clampDown * t * this.cfg.fairnessSafety;
     const half = gapSize / 2;
     const lo = Math.max(this.cfg.gapCenterMinY, half + 20, this.lastGapCenterY - maxUp);
     const hi = Math.min(

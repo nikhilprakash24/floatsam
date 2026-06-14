@@ -8,8 +8,8 @@ import physics from '../config/physics.json';
 export class PlayerView {
   readonly sprite: Phaser.GameObjects.Image;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
-    this.sprite = scene.add.image(x, y, 'seal').setDepth(10);
+  constructor(scene: Phaser.Scene, x: number, y: number, texture = 'seal') {
+    this.sprite = scene.add.image(x, y, texture).setDepth(10);
   }
 
   update(x: number, y: number, vy: number, scrollSpeed: number): void {

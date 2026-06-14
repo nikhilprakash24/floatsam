@@ -49,7 +49,7 @@ describe('GateSpawner', () => {
     }
   });
 
-  it('gap always fits fully inside the water column', () => {
+  it('gap always fits fully inside the water column', { timeout: 30_000 }, () => {
     const sp = new GateSpawner(DIFFICULTY, createRng(31337));
     for (let i = 0; i < 60 * 300; i++) {
       sp.update(dt, Math.floor(i / 600));

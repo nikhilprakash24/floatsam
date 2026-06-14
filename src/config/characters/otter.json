@@ -1,0 +1,9 @@
+{
+  "id": "otter",
+  "name": "Otter",
+  "massScale": 0.8,
+  "thrustScale": 0.72,
+  "dragScale": 0.9,
+  "buoyancyScale": 0.95,
+  "hitboxRadius": 15.2
+}
