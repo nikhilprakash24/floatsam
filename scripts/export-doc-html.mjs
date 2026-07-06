@@ -12,31 +12,40 @@ const OUT = resolve('exports/site');
 mkdirSync(OUT, { recursive: true });
 marked.setOptions({ gfm: true });
 
+// The deep-sea theme — matches the original status report & hub artifacts.
 const CSS = `
-  :root{--ink:#0e2530;--panel:#f2f7f9;--line:#cfdde4;--teal:#1d8a77;--deep:#0b3d4f;--mist:#4b6674}
-  body{font-family:"Segoe UI",system-ui,sans-serif;font-size:16px;line-height:1.65;color:var(--ink);
-       max-width:860px;margin:0 auto;padding:40px 22px 80px;background:#fbfdfe}
-  h1{font-family:"Trebuchet MS",sans-serif;font-size:32px;color:var(--deep);line-height:1.15;
-     border-bottom:3px solid var(--teal);padding-bottom:8px;margin:8px 0 14px}
-  h2{font-family:"Trebuchet MS",sans-serif;font-size:22px;color:var(--deep);margin:34px 0 8px;
+  :root{--ink:#081E27;--panel:#0D2C38;--panel2:#10394A;--line:#1C4A5C;--foam:#DCEEF5;
+        --mist:#8FB4C0;--reef:#2BAF97;--gold:#F5C86B;--sky:#5FB6DC}
+  html{background:var(--ink)}
+  body{font-family:"Segoe UI",system-ui,sans-serif;font-size:16px;line-height:1.65;color:var(--foam);
+       max-width:860px;margin:0 auto;padding:40px 22px 80px;
+       background:radial-gradient(1100px 460px at 70% -10%,rgba(43,175,151,.08),transparent 60%),var(--ink)}
+  h1{font-family:"Trebuchet MS",sans-serif;font-size:32px;color:#E8F6FB;line-height:1.15;
+     border-bottom:3px solid var(--reef);padding-bottom:8px;margin:8px 0 14px}
+  h2{font-family:"Trebuchet MS",sans-serif;font-size:22px;color:#E8F6FB;margin:34px 0 8px;
      border-bottom:1px solid var(--line);padding-bottom:4px}
-  h3{font-size:17px;color:#14606f;margin:22px 0 6px}
-  a{color:#14606f}
-  code{font-family:Consolas,monospace;font-size:13.5px;background:#e8f0f3;padding:1px 5px;border-radius:4px}
-  pre{background:#0d2c38;color:#dceef5;padding:14px 18px;border-radius:8px;overflow-x:auto}
+  h3{font-size:17px;color:var(--reef);margin:22px 0 6px}
+  p,li{color:var(--foam)}
+  a{color:var(--sky)}
+  strong{color:var(--gold)}
+  em{color:var(--mist)}
+  code{font-family:Consolas,monospace;font-size:13.5px;background:var(--panel2);color:#D8F3FF;
+      padding:1px 5px;border-radius:4px}
+  pre{background:var(--panel);border:1px solid var(--line);color:var(--foam);
+      padding:14px 18px;border-radius:8px;overflow-x:auto}
   pre code{background:none;color:inherit;padding:0;font-size:13px}
   table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px;display:block;overflow-x:auto}
-  th{background:var(--deep);color:#fff;text-align:left;padding:8px 11px;font-size:12px;
-     text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
-  td{border:1px solid var(--line);padding:7px 11px;vertical-align:top}
-  tr:nth-child(even) td{background:var(--panel)}
+  th{background:var(--panel2);color:var(--mist);text-align:left;padding:8px 11px;font-size:12px;
+     text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--line)}
+  td{border:1px solid var(--line);padding:7px 11px;vertical-align:top;background:var(--panel)}
+  tr:nth-child(even) td{background:#0F323F}
   img{max-width:min(420px,88%);display:block;margin:18px auto;border:1px solid var(--line);
-      border-radius:10px;box-shadow:0 2px 10px rgba(11,61,79,.10)}
+      border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.35)}
   svg{max-width:100%;height:auto;display:block;margin:18px auto;border-radius:10px}
-  blockquote{border-left:4px solid var(--teal);margin:14px 0;padding:4px 18px;color:var(--mist);
+  blockquote{border-left:4px solid var(--reef);margin:14px 0;padding:4px 18px;color:var(--mist);
       background:var(--panel);border-radius:0 8px 8px 0}
   hr{border:none;border-top:1px solid var(--line);margin:26px 0}
-  .stamp{font-family:Consolas,monospace;font-size:12px;color:var(--mist);letter-spacing:.12em;
+  .stamp{font-family:Consolas,monospace;font-size:12px;color:var(--reef);letter-spacing:.14em;
       text-transform:uppercase;margin-bottom:2px}
 `;
 
