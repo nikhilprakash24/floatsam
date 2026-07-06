@@ -1,0 +1,36 @@
+<svg viewBox="0 0 920 235" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fixed-timestep simulation loop" font-family="Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5FB6DC"/></marker>
+    <marker id="ar2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#E8735A"/></marker>
+  </defs>
+  <style>
+    .l2{font-size:12.5px; font-weight:600; fill:#DCEEF5}
+    .s2{font-family:Consolas,monospace; font-size:10.5px; fill:#8FB4C0}
+    .b2{fill:#10394A; stroke:#1C4A5C; rx:7}
+    .b2d{fill:#3A2724; stroke:#E8735A; rx:7}
+    .f2{stroke:#5FB6DC; stroke-width:1.6; fill:none; marker-end:url(#ar2)}
+    .fr2{stroke:#E8735A; stroke-width:1.6; fill:none; marker-end:url(#ar2r)}
+  </style>
+  <rect x="0" y="0" width="920" height="235" fill="#081E27"/>
+
+  <rect x="15"  y="30" width="130" height="58" class="b2"/><text x="80" y="53" text-anchor="middle" class="l2">input intent</text><text x="80" y="69" text-anchor="middle" class="s2">tap / hold ↑↓ / buttons</text>
+  <rect x="160" y="30" width="150" height="58" class="b2"/><text x="235" y="53" text-anchor="middle" class="l2">policy.step(dt)</text><text x="235" y="69" text-anchor="middle" class="s2">blend·ramp → thrust Δv</text>
+  <rect x="325" y="30" width="190" height="58" class="b2"/><text x="420" y="48" text-anchor="middle" class="l2">stepBody</text><text x="420" y="64" text-anchor="middle" class="s2">a=(g+field+drag)/mass</text><text x="420" y="78" text-anchor="middle" class="s2">v += a·dt + Δv · asym clamps</text>
+  <rect x="530" y="30" width="130" height="58" class="b2"/><text x="595" y="53" text-anchor="middle" class="l2">world clamps</text><text x="595" y="69" text-anchor="middle" class="s2">surface · free-x band</text>
+  <rect x="675" y="30" width="225" height="58" class="b2"/><text x="787" y="53" text-anchor="middle" class="l2">spawner.update</text><text x="787" y="69" text-anchor="middle" class="s2">speed×pace · derived clamps · gapScale</text>
+
+  <line x1="145" y1="59" x2="158" y2="59" class="f2"/>
+  <line x1="310" y1="59" x2="323" y2="59" class="f2"/>
+  <line x1="515" y1="59" x2="528" y2="59" class="f2"/>
+  <line x1="660" y1="59" x2="673" y2="59" class="f2"/>
+
+  <rect x="675" y="145" width="225" height="52" class="b2"/><text x="787" y="166" text-anchor="middle" class="l2">score++</text><text x="787" y="182" text-anchor="middle" class="s2">gate trailing edge passes player x</text>
+  <rect x="380" y="145" width="270" height="52" class="b2"/><text x="515" y="166" text-anchor="middle" class="l2">collision: circle vs pipe rects + seabed</text><text x="515" y="182" text-anchor="middle" class="s2">per-character hitbox radius</text>
+  <rect x="90" y="145" width="260" height="52" class="b2d"/><text x="220" y="166" text-anchor="middle" class="l2">DEAD → 300 ms slow-mo drift → OVER</text><text x="220" y="182" text-anchor="middle" class="s2">restart &lt; 1 s</text>
+
+  <line x1="787" y1="88" x2="787" y2="143" class="f2"/>
+  <line x1="673" y1="171" x2="652" y2="171" class="f2"/>
+  <line x1="378" y1="171" x2="352" y2="171" class="fr2"/>
+  <path d="M 92 171 C 42 171 42 59 15 59" class="f2"/>
+  <text x="30" y="130" class="s2">next fixed step (1/60 s)</text>
+</svg>

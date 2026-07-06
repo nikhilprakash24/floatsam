@@ -39,13 +39,21 @@ export class BootScene extends Phaser.Scene {
     this.registry.set('pace', 1);
     this.registry.set('paceId', 'base');
 
-    // Deep-link params: ?mode=&character= preselect; ?play=1 skips the menus
-    // (used by e2e + shareable direct links); ?scene=sandbox opens the lab.
+    // Deep-link params: ?mode=&character=&pace= preselect; ?play=1 skips the
+    // menus (e2e + shareable links); ?scene= jumps to any screen (docs shots).
     const params = new URLSearchParams(window.location.search);
     if (params.get('mode')) this.registry.set('modeId', params.get('mode'));
     if (params.get('character')) this.registry.set('characterId', params.get('character'));
 
-    if (params.get('scene') === 'sandbox') this.scene.start('Sandbox');
+    const SCENES: Record<string, string> = {
+      sandbox: 'Sandbox',
+      lab: 'Lab',
+      pace: 'PaceSelect',
+      mode: 'ModeSelect',
+      character: 'CharacterSelect',
+    };
+    const target = SCENES[params.get('scene') ?? ''];
+    if (target) this.scene.start(target);
     else if (params.get('play') === '1') this.scene.start('Game');
     else this.scene.start('Menu');
   }

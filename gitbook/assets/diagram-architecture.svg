@@ -1,0 +1,65 @@
+<svg viewBox="0 0 920 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Layered architecture diagram" font-family="Trebuchet MS, Segoe UI, sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5FB6DC"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{font-size:13px; font-weight:600; fill:#DCEEF5}
+    .sub{font-family:Consolas,monospace; font-size:11px; fill:#8FB4C0}
+    .tag{font-family:Consolas,monospace; font-size:10.5px; font-weight:600; fill:#2BAF97; letter-spacing:.14em}
+    .tagc{font-family:Consolas,monospace; font-size:10.5px; font-weight:600; fill:#F5C86B; letter-spacing:.14em}
+    .box{fill:#10394A; stroke:#1C4A5C; rx:8}
+    .boxhi{fill:#0F4237; stroke:#2BAF97; rx:8}
+    .flow{stroke:#5FB6DC; stroke-width:1.6; fill:none; marker-end:url(#ar)}
+  </style>
+  <rect x="0" y="0" width="920" height="470" fill="#081E27"/>
+  <text x="20" y="28" class="tagc">PHASER SCENES · thin adapters, render only</text>
+  <rect x="20"  y="40" width="130" height="46" class="box"/><text x="85" y="62" text-anchor="middle" class="lbl">Menu</text><text x="85" y="77" text-anchor="middle" class="sub">buttons·mute</text>
+  <rect x="160" y="40" width="180" height="46" class="box"/><text x="250" y="62" text-anchor="middle" class="lbl">Pace → Mode → Creature</text><text x="250" y="77" text-anchor="middle" class="sub">selection flow · card carousel</text>
+  <rect x="350" y="40" width="150" height="46" class="box"/><text x="425" y="62" text-anchor="middle" class="lbl">GameScene</text><text x="425" y="77" text-anchor="middle" class="sub">input capture · interpolation</text>
+  <rect x="510" y="40" width="130" height="46" class="box"/><text x="575" y="62" text-anchor="middle" class="lbl">Currents Lab</text><text x="575" y="77" text-anchor="middle" class="sub">field visualizer</text>
+  <rect x="650" y="40" width="120" height="46" class="box"/><text x="710" y="62" text-anchor="middle" class="lbl">Sandbox</text><text x="710" y="77" text-anchor="middle" class="sub">live tuning</text>
+  <rect x="780" y="40" width="120" height="46" class="box"/><text x="840" y="62" text-anchor="middle" class="lbl">HUD·Over·Pause</text><text x="840" y="77" text-anchor="middle" class="sub">overlays</text>
+
+  <line x1="425" y1="86" x2="425" y2="130" class="flow"/>
+  <text x="437" y="112" class="sub">(mode, character, seed, pace)</text>
+
+  <rect x="20" y="130" width="880" height="310" fill="none" stroke="#2BAF97" stroke-dasharray="5 5" rx="12"/>
+  <text x="36" y="153" class="tag">SRC/CORE · PURE TS · FIXED 1/60s · SEEDED RNG · ZERO PHASER IMPORTS</text>
+
+  <rect x="330" y="170" width="200" height="64" class="boxhi"/>
+  <text x="430" y="196" text-anchor="middle" class="lbl">Simulation</text>
+  <text x="430" y="212" text-anchor="middle" class="sub">accumulator · collision · score · FSM</text>
+
+  <rect x="40" y="170" width="130" height="64" class="box"/>
+  <text x="105" y="192" text-anchor="middle" class="lbl">GameMode</text>
+  <text x="105" y="208" text-anchor="middle" class="sub">classic · dive</text>
+  <text x="105" y="222" text-anchor="middle" class="sub">powerdive</text>
+  <rect x="180" y="170" width="140" height="64" class="box"/>
+  <text x="250" y="192" text-anchor="middle" class="lbl">CharacterProfile</text>
+  <text x="250" y="208" text-anchor="middle" class="sub">seal·otter·puffer·sealion</text>
+  <text x="250" y="222" text-anchor="middle" class="sub">deriveEffective()</text>
+  <line x1="170" y1="202" x2="178" y2="202" class="flow"/>
+  <line x1="320" y1="202" x2="328" y2="202" class="flow"/>
+
+  <rect x="60" y="290" width="220" height="60" class="box"/>
+  <text x="170" y="313" text-anchor="middle" class="lbl">InputPolicy</text>
+  <text x="170" y="329" text-anchor="middle" class="sub">TapUp · BiAxial · PowerDive → thrust Δv</text>
+  <rect x="300" y="290" width="260" height="60" class="box"/>
+  <text x="430" y="313" text-anchor="middle" class="lbl">FluidField  sampleForce(x,y,t)</text>
+  <text x="430" y="329" text-anchor="middle" class="sub">Constant · Zone · Vortex · Composite · HomeSpring</text>
+  <rect x="580" y="290" width="300" height="60" class="box"/>
+  <text x="730" y="313" text-anchor="middle" class="lbl">GateSpawner (pooled · seeded)</text>
+  <text x="730" y="329" text-anchor="middle" class="sub">clampsFor(char,mode) · gapScaleFor(char,mode)</text>
+
+  <line x1="380" y1="234" x2="200" y2="288" class="flow"/>
+  <line x1="430" y1="234" x2="430" y2="288" class="flow"/>
+  <line x1="490" y1="234" x2="690" y2="288" class="flow"/>
+
+  <rect x="250" y="382" width="380" height="46" class="boxhi"/>
+  <text x="440" y="402" text-anchor="middle" class="lbl">FluidBody — the ONLY integrator</text>
+  <text x="440" y="418" text-anchor="middle" class="sub">a = (gravity + buoyancy + field + drag) / massScale · then + thrust Δv</text>
+  <line x1="170" y1="350" x2="330" y2="384" class="flow"/>
+  <line x1="430" y1="350" x2="435" y2="380" class="flow"/>
+</svg>
