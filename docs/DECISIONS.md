@@ -152,3 +152,10 @@ Owner asked for a mode where a dive adds **forward motion** in addition to down,
 - **Cloud CI green on first run** (typecheck → 94 unit/sim incl. fairness matrix → build → <3 MB budget → 11 e2e): 2m09s on ubuntu-latest. The only hiccup was ordering — the Pages deploy ran before Pages was enabled (404); enabled `build_type: workflow` via API and re-ran: green.
 - **Public playable URL live: https://nikhilprakash24.github.io/floatsam/** (HTTP 200 verified). Every future merge to main redeploys automatically.
 - Remaining G3/G5 environmental items now unblocked (Lighthouse against the prod URL, cross-browser, GitBook Git-Sync) — scheduled in Sprint 1 tail; analytics remains dropped per owner default (ADR/Q7).
+
+## Sprint 1 tail — v0.6.1 shipped + Lighthouse actuals on the production URL
+**Date:** 2026-07-06 · **Author:** Orchestrator
+
+- **v0.6.1 (audit fix batch) live in production**: keyboard auto-repeat balance fix, menu copy, gated debug hook, legacy-best migration, prefers-reduced-motion, PNG/maskable/apple-touch icons, versioned SW cache, coverage enforced in CI (94.3/85.8/90.1/96.4 vs 80 floor). 98 unit/sim + 11 e2e green locally and in cloud CI (2m24s); golden master untouched. Rolling version log added: docs/DELTA.md.
+- **Lighthouse (prod URL, via system Edge — Playwright's Chromium can't run LH's perf tracer):** after landing the two flagged a11y fixes (`<main>` landmark; removed zoom-blocking viewport meta): **accessibility 100 · best-practices 100 · SEO 90 · performance 61**.
+- **Performance 61 analysis (honest):** FCP 2.6 s / LCP 2.9 s are fine; the score is dominated by **TBT 4,240 ms / TTI 7.1 s** — Phaser engine boot under Lighthouse's 4× mobile-CPU throttle — plus ~900 ms unused-JS opportunity. The G3 "≥90" target as written is not achievable for a Phaser game without deferred-boot/splash architecture; logged as a scoped backlog item (defer engine init behind first paint, prune unused Phaser modules). Real-device feel remains 60 fps; this is a synthetic-throttle score, tracked but not blocking.
