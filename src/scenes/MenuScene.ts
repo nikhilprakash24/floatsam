@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import difficulty from '../config/difficulty.json';
 import type { SfxSynth } from '../platform/audio';
+import { prefersReducedMotion } from '../platform/motion';
 import { makeButton } from '../ui/Button';
 
 const W = difficulty.worldWidth;
@@ -30,15 +31,17 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const seal = this.add.image(W / 2, H * 0.4, 'seal').setScale(1.6);
-    this.tweens.add({
-      targets: seal,
-      y: H * 0.4 + 16,
-      angle: 4,
-      duration: 1200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
+    if (!prefersReducedMotion()) {
+      this.tweens.add({
+        targets: seal,
+        y: H * 0.4 + 16,
+        angle: 4,
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
 
     this.add.particles(0, 0, 'bubble', {
       x: { min: 40, max: W - 40 },
@@ -65,7 +68,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     this.add
-      .text(W / 2, H * 0.77, '2 modes · 4 creatures · 3 tempos', {
+      .text(W / 2, H * 0.77, '3 modes · 4 creatures · 3 tempos', {
         fontFamily: FONT,
         fontSize: '16px',
         color: '#bfdde8',

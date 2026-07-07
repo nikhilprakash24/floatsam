@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { transition } from '../core/state/fsm';
 import { LocalStorageStore } from '../platform/Storage';
-import { BEST_SCORE_KEY } from '../core/score/score';
+import { BEST_SCORE_KEY, bestKeyFor } from '../core/score/score';
 import { SfxSynth } from '../platform/audio';
 import difficulty from '../config/difficulty.json';
 
@@ -30,7 +30,13 @@ export class BootScene extends Phaser.Scene {
 
     const store = new LocalStorageStore();
     this.registry.set('store', store);
-    this.registry.set('best', Number(store.get(BEST_SCORE_KEY) ?? 0));
+    // F-4 (v0.6.1): one-time migration — the pre-roster best (single key)
+    // becomes the Classic(Seal) best in the keyed system, never overwriting
+    // a newer keyed record.
+    const legacyBest = store.get(BEST_SCORE_KEY);
+    const sealKey = bestKeyFor('classic', 'seal');
+    if (legacyBest && !store.get(sealKey)) store.set(sealKey, legacyBest);
+    this.registry.set('best', Number(store.get(sealKey) ?? 0));
     this.registry.set('sfx', new SfxSynth(store));
     this.registry.set('appState', transition('BOOT', 'MENU'));
     // Default selection until the player picks (v3.3 §1).

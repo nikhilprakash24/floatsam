@@ -17,8 +17,8 @@ jobs:
       - run: npm ci
       - name: Typecheck
         run: npm run typecheck
-      - name: Unit + simulation tests (incl. 10k fairness sweep)
-        run: npm test
+      - name: Unit + simulation tests (incl. fairness matrix, coverage floor 80%)
+        run: npx vitest run --coverage
       - name: Build
         run: npx vite build
       - name: Bundle budget (<3MB)

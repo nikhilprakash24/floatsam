@@ -9,6 +9,7 @@ import { transition } from '../core/state/fsm';
 import { bestKeyFor } from '../core/score/score';
 import type { KVStore } from '../platform/Storage';
 import type { SfxSynth } from '../platform/audio';
+import { prefersReducedMotion } from '../platform/motion';
 import { PlayerView } from '../entities/PlayerView';
 
 const D = difficultyJson;
@@ -32,6 +33,8 @@ export class GameScene extends Phaser.Scene {
   private fxChecked = false;
   private mode!: GameMode;
   private bestKey!: string;
+  private debugHook = false;
+  private calmMotion = false;
   private hint?: Phaser.GameObjects.Text;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keyW!: Phaser.Input.Keyboard.Key;
@@ -57,6 +60,10 @@ export class GameScene extends Phaser.Scene {
 
     // ?seed=N gives deterministic runs for e2e and debugging; ?pace= overrides.
     const params = new URLSearchParams(window.location.search);
+    // F-3 (v0.6.1): the window.__sim test hook allocates per frame — only
+    // enable it for deep-linked/e2e/debug runs, never in normal play.
+    this.debugHook = params.has('seed') || params.has('play') || params.has('debug');
+    this.calmMotion = prefersReducedMotion();
     const urlSeed = Number(params.get('seed'));
     const seed = urlSeed > 0 ? urlSeed : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
     const pace = Number(params.get('pace')) || Number(this.registry.get('pace')) || 1;
@@ -139,6 +146,9 @@ export class GameScene extends Phaser.Scene {
 
     // Keyboard: ↑/Space (and W) flap in Classic; any control key starts the run.
     kb.on('keydown', (e: KeyboardEvent) => {
+      // F-1 (v0.6.1): ignore OS key auto-repeat — holding ↑ must not become
+      // unlimited flap spam. One press = one stroke, like tap/click.
+      if (e.repeat) return;
       const k = e.code;
       const isControl =
         k === 'ArrowUp' || k === 'ArrowDown' || k === 'KeyW' || k === 'KeyS' || k === 'Space';
@@ -168,15 +178,20 @@ export class GameScene extends Phaser.Scene {
         .setBlendMode(Phaser.BlendModes.ADD)
         .setDepth(7)
         .setAlpha(0.8);
-      this.tweens.add({
-        targets: ray,
-        x: x + sway,
-        alpha: 0.45,
-        duration: dur,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
+      // F-5: reduced-motion users get the light shafts static, not swaying.
+      if (!this.calmMotion) {
+        this.tweens.add({
+          targets: ray,
+          x: x + sway,
+          alpha: 0.45,
+          duration: dur,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      } else {
+        ray.setAlpha(0.5);
+      }
       this.fx.push(ray);
     }
     this.fx.push(this.add.image(D.worldWidth / 2, D.worldHeight / 2, 'vignette').setDepth(30));
@@ -240,22 +255,25 @@ export class GameScene extends Phaser.Scene {
   }
 
   override update(_time: number, delta: number): void {
-    // Test/debug hook: headless e2e reads this to assert game state.
-    const hitR = this.sim.hitboxRadius;
-    const nextGate = [...this.sim.gates()]
-      .filter((g) => g.x + D.pipeWidth / 2 + hitR > this.sim.body.x)
-      .sort((a, b) => a.x - b.x)[0];
-    (window as { __sim?: object }).__sim = {
-      x: this.sim.body.x,
-      y: this.sim.body.y,
-      vx: this.sim.body.vx,
-      vy: this.sim.body.vy,
-      score: this.sim.score,
-      phase: this.sim.phase,
-      frame: this.sim.frame,
-      started: this.started,
-      gate: nextGate ? { x: nextGate.x, c: nextGate.gapCenterY, gap: nextGate.gapSize } : null,
-    };
+    // Test/debug hook: headless e2e reads this to assert game state (F-3:
+    // gated behind ?seed/?play/?debug so normal play never allocates here).
+    if (this.debugHook) {
+      const hitR = this.sim.hitboxRadius;
+      const nextGate = [...this.sim.gates()]
+        .filter((g) => g.x + D.pipeWidth / 2 + hitR > this.sim.body.x)
+        .sort((a, b) => a.x - b.x)[0];
+      (window as { __sim?: object }).__sim = {
+        x: this.sim.body.x,
+        y: this.sim.body.y,
+        vx: this.sim.body.vx,
+        vy: this.sim.body.vy,
+        score: this.sim.score,
+        phase: this.sim.phase,
+        frame: this.sim.frame,
+        started: this.started,
+        gate: nextGate ? { x: nextGate.x, c: nextGate.gapCenterY, gap: nextGate.gapSize } : null,
+      };
+    }
 
     // Hold the world still until the first input (classic flappy idle).
     if (!this.started) {
@@ -303,8 +321,11 @@ export class GameScene extends Phaser.Scene {
   private onDeath(): void {
     this.registry.set('appState', transition('PLAY', 'DEAD'));
     this.sfx.death();
-    this.cameras.main.shake(180, 0.012);
-    this.cameras.main.flash(120, 200, 60, 60);
+    // F-5: no camera shake/flash under prefers-reduced-motion.
+    if (!this.calmMotion) {
+      this.cameras.main.shake(180, 0.012);
+      this.cameras.main.flash(120, 200, 60, 60);
+    }
 
     const best = this.registry.get('best') as number;
     if (this.sim.score > best) {

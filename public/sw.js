@@ -1,6 +1,8 @@
 /* Minimal offline-capable service worker: cache-first for same-origin GETs,
    network-first for navigations so deploys propagate. */
-const CACHE = 'uwflappy-v1';
+// Bump per release so stale entries are evicted on activate (assets are
+// content-hashed; this mainly refreshes the navigation/app-shell entries).
+const CACHE = 'uwflappy-v0.6.1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './index.html'])));
