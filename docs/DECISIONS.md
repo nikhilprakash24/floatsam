@@ -144,3 +144,11 @@ Owner asked for a mode where a dive adds **forward motion** in addition to down,
 - This free-x body is deliberately the **seam for lateral currents** later (§9): a sideways current only matters if the player can move sideways.
 - **Fairness — relaxed "advanced" bar:** the dive→forward coupling means a naive bang-bang bot occasionally traps itself, so Power Dive is held to **≥99% of seeds clearable** (committed at 1,500 seeds/character) rather than the strict 0-failure bar of Classic/Dive. Measured: Seal/Otter 100%, Puffer 99.67%, Sea Lion 99.53%. A human using the lunge deliberately (rather than as a descent side-effect) does better; the bot ceiling is a controller limit, not an unfair layout. Recorded honestly as advanced/experimental.
 - Classic/Dive untouched; the golden master and the strict G6 matrix stay green.
+
+## GATE G5 — Phase 5 closed: the web build is public
+**Date:** 2026-07-06 · **Author:** Orchestrator
+
+- GitHub connected to the owner's games account (**nikhilprakash24**) via device-code flow — the agent never handled credentials; machine previously verified free of any other account's tokens. Repo: **github.com/nikhilprakash24/floatsam** (public). All 22 commits + tags v0.3.0/v0.6.0 pushed; repo-local git identity updated from placeholder to the real account.
+- **Cloud CI green on first run** (typecheck → 94 unit/sim incl. fairness matrix → build → <3 MB budget → 11 e2e): 2m09s on ubuntu-latest. The only hiccup was ordering — the Pages deploy ran before Pages was enabled (404); enabled `build_type: workflow` via API and re-ran: green.
+- **Public playable URL live: https://nikhilprakash24.github.io/floatsam/** (HTTP 200 verified). Every future merge to main redeploys automatically.
+- Remaining G3/G5 environmental items now unblocked (Lighthouse against the prod URL, cross-browser, GitBook Git-Sync) — scheduled in Sprint 1 tail; analytics remains dropped per owner default (ADR/Q7).
