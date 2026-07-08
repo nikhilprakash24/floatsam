@@ -18,10 +18,22 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.makeSeal();
-    this.makeOtter();
-    this.makePuffer();
-    this.makeSeaLion();
+    for (const f of [0, 1] as const) {
+      this.makeSeal(f);
+      this.makeOtter(f);
+      this.makePuffer(f);
+      this.makeSeaLion(f);
+    }
+    // A6: two-frame yoyo swim cycles, one per creature (global anim registry).
+    for (const id of ['seal', 'otter', 'puffer', 'sealion']) {
+      this.anims.create({
+        key: `swim-${id}`,
+        frames: [{ key: id }, { key: `${id}-f1` }],
+        frameRate: 4.5,
+        repeat: -1,
+        yoyo: true,
+      });
+    }
     this.makeReefColumn();
     this.makeBubble();
     this.makeBackgrounds();
@@ -55,6 +67,7 @@ export class BootScene extends Phaser.Scene {
     const SCENES: Record<string, string> = {
       sandbox: 'Sandbox',
       lab: 'Lab',
+      fable: 'FableLab',
       pace: 'PaceSelect',
       mode: 'ModeSelect',
       character: 'CharacterSelect',
@@ -65,12 +78,15 @@ export class BootScene extends Phaser.Scene {
     else this.scene.start('Menu');
   }
 
-  private makeSeal(): void {
+  /** A6: each creature gets two swim frames (f=0/1) → a yoyo swim cycle. */
+  private makeSeal(f: 0 | 1): void {
     const g = this.add.graphics();
+    const t = f === 1 ? -7 : 0; // tail sweep
+    const p = f === 1 ? -4 : 0; // front-flipper stroke
     // Tail flippers
     g.fillStyle(0x86a0b0);
-    g.fillTriangle(4, 14, 4, 34, 22, 25);
-    g.fillTriangle(4, 20, 10, 38, 22, 27);
+    g.fillTriangle(4, 14 + t, 4, 34 + t, 22, 25);
+    g.fillTriangle(4, 20 + t, 10, 38 + t, 22, 27);
     // Body
     g.fillStyle(0x9fb8c8);
     g.fillEllipse(36, 25, 54, 30);
@@ -91,17 +107,19 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(56, 14, 1);
     // Front flipper
     g.fillStyle(0x86a0b0);
-    g.fillEllipse(36, 37, 16, 7);
-    g.generateTexture('seal', 72, 48);
+    g.fillEllipse(36, 37 + p, 16, 7);
+    g.generateTexture(f === 0 ? 'seal' : 'seal-f1', 72, 48);
     g.destroy();
   }
 
   /** Otter: smaller, sleeker, brown — light·agile·weak-flap (v3.3 roster). */
-  private makeOtter(): void {
+  private makeOtter(f: 0 | 1): void {
     const g = this.add.graphics();
+    const t = f === 1 ? -8 : 0; // quick tail flick
+    const p = f === 1 ? -3 : 0; // paw stroke
     // Tail (longer, tapered)
     g.fillStyle(0x6e5639);
-    g.fillTriangle(2, 18, 2, 30, 20, 24);
+    g.fillTriangle(2, 18 + t, 2, 30 + t, 20, 24);
     // Body (slimmer than the seal)
     g.fillStyle(0x8a6f4a);
     g.fillEllipse(34, 24, 50, 24);
@@ -127,18 +145,20 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(54, 15, 0.9);
     // Front paw
     g.fillStyle(0x6e5639);
-    g.fillEllipse(34, 35, 14, 6);
-    g.generateTexture('otter', 68, 44);
+    g.fillEllipse(34, 35 + p, 14, 6);
+    g.generateTexture(f === 0 ? 'otter' : 'otter-f1', 68, 44);
     g.destroy();
   }
 
   /** Sea Lion: large, dark, eared — heavy·powerful bruiser (v3.3 roster). */
-  private makeSeaLion(): void {
+  private makeSeaLion(f: 0 | 1): void {
     const g = this.add.graphics();
+    const t = f === 1 ? -9 : 0; // powerful tail drive
+    const p = f === 1 ? -5 : 0;
     // Hind flippers
     g.fillStyle(0x5a4632);
-    g.fillTriangle(3, 13, 3, 39, 24, 26);
-    g.fillTriangle(3, 22, 12, 42, 24, 28);
+    g.fillTriangle(3, 13 + t, 3, 39 + t, 24, 26);
+    g.fillTriangle(3, 22 + t, 12, 42 + t, 24, 28);
     // Bulky body
     g.fillStyle(0x6f5740);
     g.fillEllipse(38, 26, 60, 34);
@@ -162,31 +182,32 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(60, 13, 1.1);
     // Front flipper (large)
     g.fillStyle(0x5a4632);
-    g.fillEllipse(40, 40, 22, 9);
-    g.generateTexture('sealion', 84, 52);
+    g.fillEllipse(40, 40 + p, 22, 9);
+    g.generateTexture(f === 0 ? 'sealion' : 'sealion-f1', 84, 52);
     g.destroy();
   }
 
   /** Puffer: big, round, spiky — heavy·floaty·wide (v3.3 roster). */
-  private makePuffer(): void {
+  private makePuffer(f: 0 | 1): void {
     const g = this.add.graphics();
     const cx = 40;
     const cy = 40;
+    const puff = f === 1 ? 2.5 : 0; // frame 1: puffed up
     // Spikes radiating out.
     g.fillStyle(0xc77f3a);
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * Math.PI * 2;
-      const bx = cx + Math.cos(a) * 26;
-      const by = cy + Math.sin(a) * 26;
-      const tx = cx + Math.cos(a) * 36;
-      const ty = cy + Math.sin(a) * 36;
+      const bx = cx + Math.cos(a) * (26 + puff);
+      const by = cy + Math.sin(a) * (26 + puff);
+      const tx = cx + Math.cos(a) * (36 + puff);
+      const ty = cy + Math.sin(a) * (36 + puff);
       const px = Math.cos(a + 0.18) * 5;
       const py = Math.sin(a + 0.18) * 5;
       g.fillTriangle(bx - px, by - py, bx + px, by + py, tx, ty);
     }
     // Round body
     g.fillStyle(0xe0954b);
-    g.fillCircle(cx, cy, 27);
+    g.fillCircle(cx, cy, 27 + puff);
     // Belly
     g.fillStyle(0xf5dcb0);
     g.fillEllipse(cx - 2, cy + 7, 38, 24);
@@ -208,7 +229,7 @@ export class BootScene extends Phaser.Scene {
     // Tiny mouth
     g.fillStyle(0x8a4a22);
     g.fillEllipse(cx + 22, cy + 9, 6, 4);
-    g.generateTexture('puffer', 80, 80);
+    g.generateTexture(f === 0 ? 'puffer' : 'puffer-f1', 80, 80);
     g.destroy();
   }
 

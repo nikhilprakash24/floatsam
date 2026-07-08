@@ -160,8 +160,10 @@ export class CharacterSelectScene extends Phaser.Scene {
         .setOrigin(0.5),
     );
 
-    // Portrait.
-    c.add(this.add.image(0, top + 130, char.id).setScale(char.id === 'puffer' ? 1.5 : 2.2));
+    // Portrait — animated swim cycle (A8).
+    const portrait = this.add.sprite(0, top + 130, char.id).setScale(char.id === 'puffer' ? 1.5 : 2.2);
+    if (this.anims.exists(`swim-${char.id}`)) portrait.play(`swim-${char.id}`);
+    c.add(portrait);
 
     // Name + role.
     c.add(

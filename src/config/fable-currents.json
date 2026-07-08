@@ -1,0 +1,21 @@
+{
+  "knobs": {
+    "intensity": 1.0,
+    "assistBias": 0.0,
+    "turbulence": 40,
+    "pulsePeriod": 3.0,
+    "lungeSynergy": 0.6
+  },
+  "ranges": {
+    "intensity": { "min": 0, "max": 1.5, "step": 0.05 },
+    "assistBias": { "min": -1, "max": 1, "step": 0.1 },
+    "turbulence": { "min": 0, "max": 120, "step": 5 },
+    "pulsePeriod": { "min": 1, "max": 8, "step": 0.5 },
+    "lungeSynergy": { "min": 0, "max": 1.5, "step": 0.1 }
+  },
+  "budgets": {
+    "upFrac": 0.8,
+    "downFrac": 0.5,
+    "latFrac": 0.8
+  }
+}
