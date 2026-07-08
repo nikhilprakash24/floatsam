@@ -38,6 +38,7 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.add.image(W / 2, H / 2, 'bgGradient');
     this.add.tileSprite(W / 2, H / 2, W, H, 'bgFar');
     this.add.tileSprite(W / 2, H / 2, W, H, 'bgMid');
     this.add.image(W / 2, H - 24, 'sand');

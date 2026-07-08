@@ -27,6 +27,7 @@ export class BootScene extends Phaser.Scene {
     this.makeBackgrounds();
     this.makeDot();
     this.makeLightAndVignette();
+    this.makeDepthAndShimmer();
 
     const store = new LocalStorageStore();
     this.registry.set('store', store);
@@ -211,33 +212,40 @@ export class BootScene extends Phaser.Scene {
     g.destroy();
   }
 
+  /** Three reef palettes/coral layouts — swapped per gate recycle (A2). */
   private makeReefColumn(): void {
-    const g = this.add.graphics();
     const w = difficulty.pipeWidth;
-    // Column body
-    g.fillStyle(0x14695e);
-    g.fillRect(0, 0, w, H);
-    // Edge shading
-    g.fillStyle(0x0e4f47);
-    g.fillRect(0, 0, 7, H);
-    g.fillRect(w - 7, 0, 7, H);
-    // Texture striations
-    g.fillStyle(0x117063, 0.6);
-    for (let y = 60; y < H; y += 90) {
-      g.fillEllipse(w / 2, y, w - 18, 22);
-    }
-    // Cap (gap lip)
-    g.fillStyle(0x1d8a77);
-    g.fillRoundedRect(0, 0, w, 26, { tl: 8, tr: 8, bl: 0, br: 0 });
-    // Coral bumps on the lip
-    g.fillStyle(0xe8735a);
-    g.fillCircle(14, 7, 5);
-    g.fillStyle(0xf29a6b);
-    g.fillCircle(34, 5, 6);
-    g.fillStyle(0xd95f6a);
-    g.fillCircle(54, 7, 5);
-    g.generateTexture('reef', w, H);
-    g.destroy();
+    const VARIANTS = [
+      { body: 0x14695e, edge: 0x0e4f47, stria: 0x117063, cap: 0x1d8a77, corals: [[14, 7, 5, 0xe8735a], [34, 5, 6, 0xf29a6b], [54, 7, 5, 0xd95f6a]] },
+      { body: 0x11606a, edge: 0x0b4650, stria: 0x146d78, cap: 0x1a8c94, corals: [[12, 6, 4, 0xf2b06b], [30, 8, 5, 0xe8735a], [48, 5, 4, 0xf2d76b], [60, 8, 4, 0xd95f6a]] },
+      { body: 0x186653, edge: 0x104a3c, stria: 0x1d7a5e, cap: 0x27a077, corals: [[18, 6, 6, 0xd95f8a], [42, 7, 5, 0xf29a6b], [58, 5, 4, 0xe8735a]] },
+    ] as const;
+
+    VARIANTS.forEach((v, i) => {
+      const g = this.add.graphics();
+      g.fillStyle(v.body);
+      g.fillRect(0, 0, w, H);
+      g.fillStyle(v.edge);
+      g.fillRect(0, 0, 7, H);
+      g.fillRect(w - 7, 0, 7, H);
+      g.fillStyle(v.stria, 0.6);
+      for (let y = 60 + i * 24; y < H; y += 82 + i * 10) {
+        g.fillEllipse(w / 2, y, w - 18, 22);
+      }
+      // Barnacle specks for texture
+      g.fillStyle(0xffffff, 0.08);
+      for (let k = 0; k < 26; k++) {
+        g.fillCircle(9 + ((k * 37 + i * 13) % (w - 18)), (k * 53 + i * 29) % H, 2);
+      }
+      g.fillStyle(v.cap);
+      g.fillRoundedRect(0, 0, w, 26, { tl: 8, tr: 8, bl: 0, br: 0 });
+      for (const [cx, cy, r, col] of v.corals) {
+        g.fillStyle(col);
+        g.fillCircle(cx, cy, r);
+      }
+      g.generateTexture(`reef${i}`, w, H);
+      g.destroy();
+    });
   }
 
   private makeBubble(): void {
@@ -306,6 +314,40 @@ export class BootScene extends Phaser.Scene {
     }
     sand.generateTexture('sand', W, 48);
     sand.destroy();
+  }
+
+  /** A1: vertical depth gradient (bright surface → abyss) + surface shimmer. */
+  private makeDepthAndShimmer(): void {
+    const grad = this.textures.createCanvas('bgGradient', W, H);
+    if (grad) {
+      const ctx = grad.getContext();
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#1a6b82');
+      g.addColorStop(0.28, '#0f4a5f');
+      g.addColorStop(0.65, '#0b3d4f');
+      g.addColorStop(1, '#041e2a');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      grad.refresh();
+    }
+
+    const shim = this.textures.createCanvas('shimmer', W, 30);
+    if (shim) {
+      const ctx = shim.getContext();
+      const g = ctx.createLinearGradient(0, 0, 0, 30);
+      g.addColorStop(0, 'rgba(214,242,255,0.55)');
+      g.addColorStop(0.5, 'rgba(160,220,240,0.18)');
+      g.addColorStop(1, 'rgba(160,220,240,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, 30);
+      // Broken highlight streaks so it reads as light on water, not a bar.
+      ctx.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < 22; i++) {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect((i * 43) % W, 0, 12 + ((i * 17) % 14), 8);
+      }
+      shim.refresh();
+    }
   }
 
   private makeLightAndVignette(): void {
