@@ -23,6 +23,7 @@ export class GameScene extends Phaser.Scene {
   private sim!: Simulation;
   private player!: PlayerView;
   private gateViews: GateView[] = [];
+  private bgMountains!: Phaser.GameObjects.TileSprite;
   private bgFar!: Phaser.GameObjects.TileSprite;
   private bgMid!: Phaser.GameObjects.TileSprite;
   private bubbles!: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -88,6 +89,11 @@ export class GameScene extends Phaser.Scene {
     this.add
       .image(D.worldWidth / 2, D.worldHeight / 2, 'bgGradient')
       .setDepth(0)
+      .setTint(MODE_TINT[mode.id] ?? 0xffffff);
+    // Distant seamounts, graded with the mode tint, drifting slowest of all.
+    this.bgMountains = this.add
+      .tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'seamounts')
+      .setDepth(0.5)
       .setTint(MODE_TINT[mode.id] ?? 0xffffff);
     this.bgFar = this.add.tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'bgFar').setDepth(1);
     this.bgMid = this.add.tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'bgMid').setDepth(2);
@@ -200,38 +206,12 @@ export class GameScene extends Phaser.Scene {
 
     // A3: real postFX vignette on WebGL (replaces the static texture there);
     // canvas renderer keeps the texture fallback below.
+    // Light shafts removed — distant seamounts (added in create()) carry the
+    // background now. Keep only the depth vignette.
     const webgl = this.game.renderer.type === Phaser.WEBGL;
     if (webgl) {
       this.cameras.main.postFX.addVignette(0.5, 0.5, 0.92, 0.38);
-    }
-    for (const [x, sway, dur] of [
-      [120, 26, 5200],
-      [280, -34, 6800],
-      [400, 22, 6000],
-    ] as const) {
-      const ray = this.add
-        .image(x, 0, 'ray')
-        .setOrigin(0.5, 0)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setDepth(7)
-        .setAlpha(0.8);
-      // F-5: reduced-motion users get the light shafts static, not swaying.
-      if (!this.calmMotion) {
-        this.tweens.add({
-          targets: ray,
-          x: x + sway,
-          alpha: 0.45,
-          duration: dur,
-          yoyo: true,
-          repeat: -1,
-          ease: 'Sine.easeInOut',
-        });
-      } else {
-        ray.setAlpha(0.5);
-      }
-      this.fx.push(ray);
-    }
-    if (!webgl) {
+    } else {
       this.fx.push(this.add.image(D.worldWidth / 2, D.worldHeight / 2, 'vignette').setDepth(30));
     }
   }
@@ -337,6 +317,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    this.bgMountains.tilePositionX += speed * 0.05 * (delta / 1000);
     this.bgFar.tilePositionX += speed * 0.12 * (delta / 1000);
     this.bgMid.tilePositionX += speed * 0.35 * (delta / 1000);
 

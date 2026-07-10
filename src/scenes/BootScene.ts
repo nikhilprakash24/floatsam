@@ -40,6 +40,7 @@ export class BootScene extends Phaser.Scene {
     this.makeDot();
     this.makeLightAndVignette();
     this.makeDepthAndShimmer();
+    this.makeSeamounts();
 
     const store = new LocalStorageStore();
     this.registry.set('store', store);
@@ -402,6 +403,42 @@ export class BootScene extends Phaser.Scene {
       ctx.fillRect(0, 0, W, H);
       vig.refresh();
     }
+  }
+
+  /**
+   * Distant seamounts — three receding silhouette ridges with underwater
+   * atmospheric perspective (far = hazier, bluer, fainter). Replaces the
+   * caustic light shafts. Built from integer-frequency sines so the texture
+   * tiles seamlessly and can parallax-scroll (2× width for a longer loop).
+   */
+  private makeSeamounts(): void {
+    const TW = W * 2;
+    const cv = this.textures.createCanvas('seamounts', TW, H);
+    if (!cv) return;
+    const ctx = cv.getContext();
+
+    const ridge = (baseY: number, amp: number, fill: string, seed: number): void => {
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (let x = 0; x <= TW; x++) {
+        const t = x / TW;
+        const n =
+          0.5 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 2 * t + seed)) +
+          0.3 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 4 * t + seed * 1.7)) +
+          0.2 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 6 * t + seed * 2.6));
+        ctx.lineTo(x, baseY - amp * n);
+      }
+      ctx.lineTo(TW, H);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+    };
+
+    // far → near: back ridge fades toward the water haze; front reads darker.
+    ridge(H * 0.56, 150, 'rgba(41, 104, 126, 0.36)', 0.6);
+    ridge(H * 0.68, 185, 'rgba(24, 82, 103, 0.52)', 2.1);
+    ridge(H * 0.82, 240, 'rgba(11, 54, 70, 0.78)', 3.9);
+    cv.refresh();
   }
 
   private makeDot(): void {
