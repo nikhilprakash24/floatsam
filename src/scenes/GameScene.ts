@@ -83,12 +83,42 @@ export class GameScene extends Phaser.Scene {
     );
     this.registry.set('score', 0);
 
+    // A1+A7: depth-gradient water, graded per mode (Dive cooler, PD warmer).
+    const MODE_TINT: Record<string, number> = { classic: 0xffffff, dive: 0xa8cce0, powerdive: 0xe8cdaa };
+    this.add
+      .image(D.worldWidth / 2, D.worldHeight / 2, 'bgGradient')
+      .setDepth(0)
+      .setTint(MODE_TINT[mode.id] ?? 0xffffff);
     this.bgFar = this.add.tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'bgFar').setDepth(1);
     this.bgMid = this.add.tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'bgMid').setDepth(2);
 
+    // A5: slow plankton motes drifting past (ambient depth).
+    this.add
+      .particles(0, 0, 'dot', {
+        x: { min: 0, max: D.worldWidth },
+        y: { min: 30, max: D.worldHeight - 60 },
+        speedX: { min: -22, max: -8 },
+        speedY: { min: -4, max: 4 },
+        scale: { min: 0.12, max: 0.4 },
+        alpha: { start: 0.22, end: 0 },
+        lifespan: 9000,
+        frequency: this.calmMotion ? 1400 : 650,
+      })
+      .setDepth(3);
+
+    // A1: broken light shimmer at the water surface.
+    const shimmer = this.add
+      .image(D.worldWidth / 2, 12, 'shimmer')
+      .setDepth(8)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.5);
+    if (!this.calmMotion) {
+      this.tweens.add({ targets: shimmer, alpha: 0.25, duration: 1700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+
     this.gateViews = this.sim.gates().map(() => ({
-      top: this.add.image(0, 0, 'reef').setOrigin(0.5, 1).setFlipY(true).setDepth(5),
-      bottom: this.add.image(0, 0, 'reef').setOrigin(0.5, 0).setDepth(5),
+      top: this.add.image(0, 0, 'reef0').setOrigin(0.5, 1).setFlipY(true).setDepth(5),
+      bottom: this.add.image(0, 0, 'reef0').setOrigin(0.5, 0).setDepth(5),
     }));
 
     this.add.image(D.worldWidth / 2, D.worldHeight - 24, 'sand').setDepth(6);
@@ -167,6 +197,13 @@ export class GameScene extends Phaser.Scene {
   /** Caustic light shafts + vignette; cheap, and removed if FPS dips (§8). */
   private addEffects(): void {
     if (this.registry.get('fxLow') === true) return;
+
+    // A3: real postFX vignette on WebGL (replaces the static texture there);
+    // canvas renderer keeps the texture fallback below.
+    const webgl = this.game.renderer.type === Phaser.WEBGL;
+    if (webgl) {
+      this.cameras.main.postFX.addVignette(0.5, 0.5, 0.92, 0.38);
+    }
     for (const [x, sway, dur] of [
       [120, 26, 5200],
       [280, -34, 6800],
@@ -194,7 +231,9 @@ export class GameScene extends Phaser.Scene {
       }
       this.fx.push(ray);
     }
-    this.fx.push(this.add.image(D.worldWidth / 2, D.worldHeight / 2, 'vignette').setDepth(30));
+    if (!webgl) {
+      this.fx.push(this.add.image(D.worldWidth / 2, D.worldHeight / 2, 'vignette').setDepth(30));
+    }
   }
 
   private bindVisibilityPause(): void {
@@ -304,7 +343,12 @@ export class GameScene extends Phaser.Scene {
     this.layoutGates(alpha, speed);
 
     const r = this.sim.renderState(alpha);
-    this.player.update(r.x, r.y, r.vy, speed);
+    if (this.sim.phase === 'PLAY') {
+      this.player.update(r.x, r.y, r.vy, speed);
+    } else {
+      // DEAD drift: position only — the death-spin tween owns rotation (A4).
+      this.player.sprite.setPosition(r.x, r.y);
+    }
   }
 
   private layoutGates(alpha = 1, speed = 0): void {
@@ -312,6 +356,13 @@ export class GameScene extends Phaser.Scene {
     this.sim.gates().forEach((g, i) => {
       const view = this.gateViews[i];
       if (!view) return;
+      // A2: reef palette varies per recycle (keyed off the gap center, which
+      // only changes when a gate regenerates — cheap texture swap).
+      const variant = `reef${Math.abs(Math.floor(g.gapCenterY * 7)) % 3}`;
+      if (view.top.texture.key !== variant) {
+        view.top.setTexture(variant);
+        view.bottom.setTexture(variant);
+      }
       const x = g.x - back;
       view.top.setPosition(x, g.gapCenterY - g.gapSize / 2);
       view.bottom.setPosition(x, g.gapCenterY + g.gapSize / 2);
@@ -321,10 +372,18 @@ export class GameScene extends Phaser.Scene {
   private onDeath(): void {
     this.registry.set('appState', transition('PLAY', 'DEAD'));
     this.sfx.death();
-    // F-5: no camera shake/flash under prefers-reduced-motion.
+    // A4: bubble burst at the point of impact + a slow spin through the
+    // death drift (burst for everyone; spin skipped under reduced motion).
+    this.bubbles.emitParticleAt(this.player.sprite.x, this.player.sprite.y, 16);
     if (!this.calmMotion) {
       this.cameras.main.shake(180, 0.012);
       this.cameras.main.flash(120, 200, 60, 60);
+      this.tweens.add({
+        targets: this.player.sprite,
+        angle: this.player.sprite.angle + 150,
+        duration: 900,
+        ease: 'Cubic.easeOut',
+      });
     }
 
     const best = this.registry.get('best') as number;

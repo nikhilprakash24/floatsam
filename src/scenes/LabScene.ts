@@ -170,7 +170,7 @@ export class LabScene extends Phaser.Scene {
     const y = this.prev.y + (this.body.y - this.prev.y) * a;
     this.player.update(x, y, this.body.vy, 130);
 
-    this.viz.update(delta / 1000);
+    this.viz.update(delta / 1000, this.simTime);
 
     const f = this.currentField.sampleForce(this.body.x, this.body.y, this.simTime);
     this.hud.setText(

@@ -14,23 +14,17 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.add.image(W / 2, H / 2, 'bgGradient');
     this.add.tileSprite(W / 2, H / 2, W, H, 'bgFar');
     this.add.tileSprite(W / 2, H / 2, W, H, 'bgMid');
     this.add.image(W / 2, H - 24, 'sand');
 
-    this.add
-      .text(W / 2, H * 0.18, 'UNDERWATER\nFLAPPY', {
-        fontFamily: FONT,
-        fontSize: '50px',
-        fontStyle: 'bold',
-        color: '#e8f6fb',
-        align: 'center',
-        stroke: '#0a2e3d',
-        strokeThickness: 8,
-      })
-      .setOrigin(0.5);
+    // A8: per-letter wave title (calm = static).
+    this.waveTitle('UNDERWATER', H * 0.13, 48);
+    this.waveTitle('FLAPPY', H * 0.215, 48);
 
-    const seal = this.add.image(W / 2, H * 0.4, 'seal').setScale(1.6);
+    const seal = this.add.sprite(W / 2, H * 0.4, 'seal').setScale(1.6);
+    if (this.anims.exists('swim-seal')) seal.play('swim-seal');
     if (!prefersReducedMotion()) {
       this.tweens.add({
         targets: seal,
@@ -59,21 +53,20 @@ export class MenuScene extends Phaser.Scene {
       height: 64,
       fontSize: 28,
     });
-    makeButton(this, W / 2, H * 0.68, '🌊  CURRENTS LAB', () => this.scene.start('Lab'), {
+    makeButton(this, W / 2, H * 0.675, '🌊  CURRENTS LAB', () => this.scene.start('Lab'), {
       variant: 'ghost',
       width: 250,
-      height: 52,
+      height: 50,
       fontSize: 20,
       accent: 0x4aa3e0,
     });
-
-    this.add
-      .text(W / 2, H * 0.77, '3 modes · 4 creatures · 3 tempos', {
-        fontFamily: FONT,
-        fontSize: '16px',
-        color: '#bfdde8',
-      })
-      .setOrigin(0.5);
+    makeButton(this, W / 2, H * 0.755, '✨  FABLE CURRENTS', () => this.scene.start('FableLab'), {
+      variant: 'ghost',
+      width: 250,
+      height: 46,
+      fontSize: 18,
+      accent: 0x8f6fd6,
+    });
 
     const sfx = this.registry.get('sfx') as SfxSynth;
     const mute = this.add
@@ -93,6 +86,36 @@ export class MenuScene extends Phaser.Scene {
       height: 34,
       fontSize: 14,
       accent: 0x7fa8b8,
+    });
+  }
+
+  /** A8: title as individual letters riding a gentle wave. */
+  private waveTitle(text: string, y: number, size: number): void {
+    const style = {
+      fontFamily: FONT,
+      fontSize: `${size}px`,
+      fontStyle: 'bold',
+      color: '#e8f6fb',
+      stroke: '#0a2e3d',
+      strokeThickness: 8,
+    };
+    const letters = [...text].map((ch) => this.add.text(0, y, ch, style).setOrigin(0.5));
+    const total = letters.reduce((s, l) => s + l.width - 6, 0);
+    let x = W / 2 - total / 2;
+    letters.forEach((l, i) => {
+      l.setX(x + (l.width - 6) / 2);
+      x += l.width - 6;
+      if (!prefersReducedMotion()) {
+        this.tweens.add({
+          targets: l,
+          y: y + 6,
+          duration: 1500,
+          delay: i * 110,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      }
     });
   }
 }

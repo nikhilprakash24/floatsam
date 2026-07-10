@@ -71,12 +71,13 @@ export class FieldVisualizer {
     }
   }
 
-  /** Advect and redraw tracer particles. dt in seconds. */
-  update(dt: number): void {
+  /** Advect and redraw tracer particles. dt in seconds; t = sim time so
+   *  time-varying fields (pulses, slipstreams) animate truthfully. */
+  update(dt: number, t = 0): void {
     const g = this.flow;
     g.clear();
     for (const p of this.particles) {
-      const f = this.field.sampleForce(p.x, p.y, 0);
+      const f = this.field.sampleForce(p.x, p.y, t);
       const nx = p.x + f.x * dt * 0.5;
       const ny = p.y + f.y * dt * 0.5;
       p.life -= dt;

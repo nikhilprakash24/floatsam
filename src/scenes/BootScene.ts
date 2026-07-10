@@ -18,15 +18,28 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.makeSeal();
-    this.makeOtter();
-    this.makePuffer();
-    this.makeSeaLion();
+    for (const f of [0, 1] as const) {
+      this.makeSeal(f);
+      this.makeOtter(f);
+      this.makePuffer(f);
+      this.makeSeaLion(f);
+    }
+    // A6: two-frame yoyo swim cycles, one per creature (global anim registry).
+    for (const id of ['seal', 'otter', 'puffer', 'sealion']) {
+      this.anims.create({
+        key: `swim-${id}`,
+        frames: [{ key: id }, { key: `${id}-f1` }],
+        frameRate: 4.5,
+        repeat: -1,
+        yoyo: true,
+      });
+    }
     this.makeReefColumn();
     this.makeBubble();
     this.makeBackgrounds();
     this.makeDot();
     this.makeLightAndVignette();
+    this.makeDepthAndShimmer();
 
     const store = new LocalStorageStore();
     this.registry.set('store', store);
@@ -54,6 +67,7 @@ export class BootScene extends Phaser.Scene {
     const SCENES: Record<string, string> = {
       sandbox: 'Sandbox',
       lab: 'Lab',
+      fable: 'FableLab',
       pace: 'PaceSelect',
       mode: 'ModeSelect',
       character: 'CharacterSelect',
@@ -64,12 +78,15 @@ export class BootScene extends Phaser.Scene {
     else this.scene.start('Menu');
   }
 
-  private makeSeal(): void {
+  /** A6: each creature gets two swim frames (f=0/1) → a yoyo swim cycle. */
+  private makeSeal(f: 0 | 1): void {
     const g = this.add.graphics();
+    const t = f === 1 ? -7 : 0; // tail sweep
+    const p = f === 1 ? -4 : 0; // front-flipper stroke
     // Tail flippers
     g.fillStyle(0x86a0b0);
-    g.fillTriangle(4, 14, 4, 34, 22, 25);
-    g.fillTriangle(4, 20, 10, 38, 22, 27);
+    g.fillTriangle(4, 14 + t, 4, 34 + t, 22, 25);
+    g.fillTriangle(4, 20 + t, 10, 38 + t, 22, 27);
     // Body
     g.fillStyle(0x9fb8c8);
     g.fillEllipse(36, 25, 54, 30);
@@ -90,17 +107,19 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(56, 14, 1);
     // Front flipper
     g.fillStyle(0x86a0b0);
-    g.fillEllipse(36, 37, 16, 7);
-    g.generateTexture('seal', 72, 48);
+    g.fillEllipse(36, 37 + p, 16, 7);
+    g.generateTexture(f === 0 ? 'seal' : 'seal-f1', 72, 48);
     g.destroy();
   }
 
   /** Otter: smaller, sleeker, brown — light·agile·weak-flap (v3.3 roster). */
-  private makeOtter(): void {
+  private makeOtter(f: 0 | 1): void {
     const g = this.add.graphics();
+    const t = f === 1 ? -8 : 0; // quick tail flick
+    const p = f === 1 ? -3 : 0; // paw stroke
     // Tail (longer, tapered)
     g.fillStyle(0x6e5639);
-    g.fillTriangle(2, 18, 2, 30, 20, 24);
+    g.fillTriangle(2, 18 + t, 2, 30 + t, 20, 24);
     // Body (slimmer than the seal)
     g.fillStyle(0x8a6f4a);
     g.fillEllipse(34, 24, 50, 24);
@@ -126,18 +145,20 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(54, 15, 0.9);
     // Front paw
     g.fillStyle(0x6e5639);
-    g.fillEllipse(34, 35, 14, 6);
-    g.generateTexture('otter', 68, 44);
+    g.fillEllipse(34, 35 + p, 14, 6);
+    g.generateTexture(f === 0 ? 'otter' : 'otter-f1', 68, 44);
     g.destroy();
   }
 
   /** Sea Lion: large, dark, eared — heavy·powerful bruiser (v3.3 roster). */
-  private makeSeaLion(): void {
+  private makeSeaLion(f: 0 | 1): void {
     const g = this.add.graphics();
+    const t = f === 1 ? -9 : 0; // powerful tail drive
+    const p = f === 1 ? -5 : 0;
     // Hind flippers
     g.fillStyle(0x5a4632);
-    g.fillTriangle(3, 13, 3, 39, 24, 26);
-    g.fillTriangle(3, 22, 12, 42, 24, 28);
+    g.fillTriangle(3, 13 + t, 3, 39 + t, 24, 26);
+    g.fillTriangle(3, 22 + t, 12, 42 + t, 24, 28);
     // Bulky body
     g.fillStyle(0x6f5740);
     g.fillEllipse(38, 26, 60, 34);
@@ -161,31 +182,32 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(60, 13, 1.1);
     // Front flipper (large)
     g.fillStyle(0x5a4632);
-    g.fillEllipse(40, 40, 22, 9);
-    g.generateTexture('sealion', 84, 52);
+    g.fillEllipse(40, 40 + p, 22, 9);
+    g.generateTexture(f === 0 ? 'sealion' : 'sealion-f1', 84, 52);
     g.destroy();
   }
 
   /** Puffer: big, round, spiky — heavy·floaty·wide (v3.3 roster). */
-  private makePuffer(): void {
+  private makePuffer(f: 0 | 1): void {
     const g = this.add.graphics();
     const cx = 40;
     const cy = 40;
+    const puff = f === 1 ? 2.5 : 0; // frame 1: puffed up
     // Spikes radiating out.
     g.fillStyle(0xc77f3a);
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * Math.PI * 2;
-      const bx = cx + Math.cos(a) * 26;
-      const by = cy + Math.sin(a) * 26;
-      const tx = cx + Math.cos(a) * 36;
-      const ty = cy + Math.sin(a) * 36;
+      const bx = cx + Math.cos(a) * (26 + puff);
+      const by = cy + Math.sin(a) * (26 + puff);
+      const tx = cx + Math.cos(a) * (36 + puff);
+      const ty = cy + Math.sin(a) * (36 + puff);
       const px = Math.cos(a + 0.18) * 5;
       const py = Math.sin(a + 0.18) * 5;
       g.fillTriangle(bx - px, by - py, bx + px, by + py, tx, ty);
     }
     // Round body
     g.fillStyle(0xe0954b);
-    g.fillCircle(cx, cy, 27);
+    g.fillCircle(cx, cy, 27 + puff);
     // Belly
     g.fillStyle(0xf5dcb0);
     g.fillEllipse(cx - 2, cy + 7, 38, 24);
@@ -207,37 +229,44 @@ export class BootScene extends Phaser.Scene {
     // Tiny mouth
     g.fillStyle(0x8a4a22);
     g.fillEllipse(cx + 22, cy + 9, 6, 4);
-    g.generateTexture('puffer', 80, 80);
+    g.generateTexture(f === 0 ? 'puffer' : 'puffer-f1', 80, 80);
     g.destroy();
   }
 
+  /** Three reef palettes/coral layouts — swapped per gate recycle (A2). */
   private makeReefColumn(): void {
-    const g = this.add.graphics();
     const w = difficulty.pipeWidth;
-    // Column body
-    g.fillStyle(0x14695e);
-    g.fillRect(0, 0, w, H);
-    // Edge shading
-    g.fillStyle(0x0e4f47);
-    g.fillRect(0, 0, 7, H);
-    g.fillRect(w - 7, 0, 7, H);
-    // Texture striations
-    g.fillStyle(0x117063, 0.6);
-    for (let y = 60; y < H; y += 90) {
-      g.fillEllipse(w / 2, y, w - 18, 22);
-    }
-    // Cap (gap lip)
-    g.fillStyle(0x1d8a77);
-    g.fillRoundedRect(0, 0, w, 26, { tl: 8, tr: 8, bl: 0, br: 0 });
-    // Coral bumps on the lip
-    g.fillStyle(0xe8735a);
-    g.fillCircle(14, 7, 5);
-    g.fillStyle(0xf29a6b);
-    g.fillCircle(34, 5, 6);
-    g.fillStyle(0xd95f6a);
-    g.fillCircle(54, 7, 5);
-    g.generateTexture('reef', w, H);
-    g.destroy();
+    const VARIANTS = [
+      { body: 0x14695e, edge: 0x0e4f47, stria: 0x117063, cap: 0x1d8a77, corals: [[14, 7, 5, 0xe8735a], [34, 5, 6, 0xf29a6b], [54, 7, 5, 0xd95f6a]] },
+      { body: 0x11606a, edge: 0x0b4650, stria: 0x146d78, cap: 0x1a8c94, corals: [[12, 6, 4, 0xf2b06b], [30, 8, 5, 0xe8735a], [48, 5, 4, 0xf2d76b], [60, 8, 4, 0xd95f6a]] },
+      { body: 0x186653, edge: 0x104a3c, stria: 0x1d7a5e, cap: 0x27a077, corals: [[18, 6, 6, 0xd95f8a], [42, 7, 5, 0xf29a6b], [58, 5, 4, 0xe8735a]] },
+    ] as const;
+
+    VARIANTS.forEach((v, i) => {
+      const g = this.add.graphics();
+      g.fillStyle(v.body);
+      g.fillRect(0, 0, w, H);
+      g.fillStyle(v.edge);
+      g.fillRect(0, 0, 7, H);
+      g.fillRect(w - 7, 0, 7, H);
+      g.fillStyle(v.stria, 0.6);
+      for (let y = 60 + i * 24; y < H; y += 82 + i * 10) {
+        g.fillEllipse(w / 2, y, w - 18, 22);
+      }
+      // Barnacle specks for texture
+      g.fillStyle(0xffffff, 0.08);
+      for (let k = 0; k < 26; k++) {
+        g.fillCircle(9 + ((k * 37 + i * 13) % (w - 18)), (k * 53 + i * 29) % H, 2);
+      }
+      g.fillStyle(v.cap);
+      g.fillRoundedRect(0, 0, w, 26, { tl: 8, tr: 8, bl: 0, br: 0 });
+      for (const [cx, cy, r, col] of v.corals) {
+        g.fillStyle(col);
+        g.fillCircle(cx, cy, r);
+      }
+      g.generateTexture(`reef${i}`, w, H);
+      g.destroy();
+    });
   }
 
   private makeBubble(): void {
@@ -306,6 +335,40 @@ export class BootScene extends Phaser.Scene {
     }
     sand.generateTexture('sand', W, 48);
     sand.destroy();
+  }
+
+  /** A1: vertical depth gradient (bright surface → abyss) + surface shimmer. */
+  private makeDepthAndShimmer(): void {
+    const grad = this.textures.createCanvas('bgGradient', W, H);
+    if (grad) {
+      const ctx = grad.getContext();
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#1a6b82');
+      g.addColorStop(0.28, '#0f4a5f');
+      g.addColorStop(0.65, '#0b3d4f');
+      g.addColorStop(1, '#041e2a');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      grad.refresh();
+    }
+
+    const shim = this.textures.createCanvas('shimmer', W, 30);
+    if (shim) {
+      const ctx = shim.getContext();
+      const g = ctx.createLinearGradient(0, 0, 0, 30);
+      g.addColorStop(0, 'rgba(214,242,255,0.55)');
+      g.addColorStop(0.5, 'rgba(160,220,240,0.18)');
+      g.addColorStop(1, 'rgba(160,220,240,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, 30);
+      // Broken highlight streaks so it reads as light on water, not a bar.
+      ctx.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < 22; i++) {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect((i * 43) % W, 0, 12 + ((i * 17) % 14), 8);
+      }
+      shim.refresh();
+    }
   }
 
   private makeLightAndVignette(): void {

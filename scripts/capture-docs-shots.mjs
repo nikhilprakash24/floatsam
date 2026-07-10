@@ -94,6 +94,14 @@ await tap(426, 624); // next preset →
 await page.waitForTimeout(1200);
 await shot('lab-whirlpool');
 
+// Fable Currents (knob panel + field viz), mid-dive for the lunge readout
+await go('/?scene=fable', 1600);
+await page.mouse.move(240, 500);
+await page.mouse.down({ button: 'right' });
+await page.waitForTimeout(500);
+await shot('fable-currents');
+await page.mouse.up({ button: 'right' });
+
 // Sandbox (DOM sliders included)
 await go('/?scene=sandbox', 1200);
 await shot('sandbox');

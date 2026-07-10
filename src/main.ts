@@ -11,6 +11,7 @@ import { GameOverScene } from './scenes/GameOverScene';
 import { PauseScene } from './scenes/PauseScene';
 import { SandboxScene } from './scenes/SandboxScene';
 import { LabScene } from './scenes/LabScene';
+import { FableLabScene } from './scenes/FableLabScene';
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -47,5 +48,6 @@ new Phaser.Game({
     PauseScene,
     SandboxScene,
     LabScene,
+    FableLabScene,
   ],
 });
