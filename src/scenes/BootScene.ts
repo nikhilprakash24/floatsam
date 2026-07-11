@@ -41,6 +41,7 @@ export class BootScene extends Phaser.Scene {
     this.makeLightAndVignette();
     this.makeDepthAndShimmer();
     this.makeSeamounts();
+    this.makeWhale();
 
     const store = new LocalStorageStore();
     this.registry.set('store', store);
@@ -439,6 +440,34 @@ export class BootScene extends Phaser.Scene {
     ridge(H * 0.68, 185, 'rgba(24, 82, 103, 0.52)', 2.1);
     ridge(H * 0.82, 240, 'rgba(11, 54, 70, 0.78)', 3.9);
     cv.refresh();
+  }
+
+  /**
+   * Distant whale silhouette (facing left) for the rare background fly-by.
+   * A humpback gestalt from overlapping ellipses + fluke/pectoral triangles —
+   * read at low alpha and far depth, so a recognizable shape is all it needs.
+   */
+  private makeWhale(): void {
+    const g = this.add.graphics();
+    g.fillStyle(0x0a3547, 1);
+    // Long tapered body + broad head (left).
+    g.fillEllipse(102, 44, 168, 46);
+    g.fillEllipse(46, 46, 84, 40);
+    // Tail stock narrowing to the flukes (right).
+    g.fillTriangle(160, 30, 160, 58, 198, 44);
+    // Horizontal tail flukes.
+    g.fillTriangle(186, 44, 210, 20, 202, 46);
+    g.fillTriangle(186, 44, 210, 68, 202, 46);
+    // Long humpback pectoral fin, angled down-forward.
+    g.fillTriangle(80, 56, 52, 86, 104, 62);
+    // Faint jaw line hint.
+    g.fillStyle(0x061f2b, 0.6);
+    g.fillEllipse(40, 56, 60, 8);
+    // Tiny eye highlight.
+    g.fillStyle(0x9fd8cf, 0.5);
+    g.fillCircle(28, 40, 2);
+    g.generateTexture('whale', 214, 92);
+    g.destroy();
   }
 
   private makeDot(): void {
