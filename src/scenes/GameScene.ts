@@ -10,6 +10,7 @@ import { bestKeyFor } from '../core/score/score';
 import type { KVStore } from '../platform/Storage';
 import type { SfxSynth } from '../platform/audio';
 import { prefersReducedMotion } from '../platform/motion';
+import { HELPFUL_KINDS, type CellKind } from '../core/fluid/currents/cells';
 import { PlayerView } from '../entities/PlayerView';
 
 const D = difficultyJson;
@@ -27,6 +28,7 @@ export class GameScene extends Phaser.Scene {
   private player!: PlayerView;
   private gateViews: GateView[] = [];
   private bgMountains!: Phaser.GameObjects.TileSprite;
+  private currentsFx?: Phaser.GameObjects.Graphics;
   private bgFar!: Phaser.GameObjects.TileSprite;
   private bgMid!: Phaser.GameObjects.TileSprite;
   private bubbles!: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -72,6 +74,9 @@ export class GameScene extends Phaser.Scene {
     const urlSeed = Number(params.get('seed'));
     const seed = urlSeed > 0 ? urlSeed : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
     const pace = Number(params.get('pace')) || Number(this.registry.get('pace')) || 1;
+    // Currents are opt-in: ?currents=1 or a registry flag (default off → the
+    // config decides, which is off for every mode). Sandbox variable per §9.
+    const currents = params.get('currents') === '1' || this.registry.get('currents') === true ? true : undefined;
     this.sim = new Simulation(
       mode,
       character,
@@ -85,6 +90,7 @@ export class GameScene extends Phaser.Scene {
         onGameOver: () => this.onGameOver(),
       },
       pace,
+      currents,
     );
     this.registry.set('score', 0);
 
@@ -122,6 +128,11 @@ export class GameScene extends Phaser.Scene {
     if (!this.calmMotion) {
       this.tweens.add({ targets: shimmer, alpha: 0.25, duration: 1700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
+
+    // Currents telegraph (drawn only when currents are active): a translucent
+    // tinted footprint + flow arrow per cell, so a shove is never a surprise.
+    // Sits in the water column below the reef so pipes still occlude it.
+    if (this.sim.hasCurrents) this.currentsFx = this.add.graphics().setDepth(4);
 
     this.gateViews = this.sim.gates().map(() => ({
       top: this.add.image(0, 0, 'reef0').setOrigin(0.5, 1).setFlipY(true).setDepth(5),
@@ -365,6 +376,7 @@ export class GameScene extends Phaser.Scene {
     this.bgFar.tilePositionX += speed * 0.12 * (delta / 1000);
     this.bgMid.tilePositionX += speed * 0.35 * (delta / 1000);
 
+    if (this.currentsFx) this.drawCurrents();
     this.layoutGates(alpha, speed);
 
     const r = this.sim.renderState(alpha);
@@ -373,6 +385,43 @@ export class GameScene extends Phaser.Scene {
     } else {
       // DEAD drift: position only — the death-spin tween owns rotation (A4).
       this.player.sprite.setPosition(r.x, r.y);
+    }
+  }
+
+  /** Dominant flow direction per cell kind, for the telegraph arrow. */
+  private static readonly FLOW: Record<CellKind, [number, number]> = {
+    updraft: [0, -1], geyser: [0, -1], 'launch-ramp': [0, -1],
+    downwash: [0, 1], crosscut: [1, 0], tailwind: [1, 0], headwind: [-1, 0],
+    sidewinder: [0.7, 0.7], boil: [0, 0], drain: [0, 0], 'eddy-cw': [0, 0], 'eddy-ccw': [0, 0],
+  };
+
+  /** Redraw the current-cell telegraph in world/screen space (fixed-x scroller). */
+  private drawCurrents(): void {
+    const g = this.currentsFx!;
+    g.clear();
+    for (const c of this.sim.currentCells()) {
+      if (c.worldX < -c.halfWidth || c.worldX > D.worldWidth + c.halfWidth) continue;
+      const helpful = HELPFUL_KINDS.includes(c.kind);
+      const col = helpful ? 0x54d0aa : 0xff8a6b;
+      const rw = c.halfWidth * 1.5;
+      const rh = Math.min(320, c.halfWidth * 2.1);
+      g.fillStyle(col, 0.1);
+      g.fillEllipse(c.worldX, c.centerY, rw * 2, rh * 2);
+      g.lineStyle(2, col, 0.45);
+      g.strokeEllipse(c.worldX, c.centerY, rw * 2, rh * 2);
+      const [dx, dy] = GameScene.FLOW[c.kind];
+      if (dx === 0 && dy === 0) {
+        // Rotational / radial: a small ring hints "spin/pull" rather than a line.
+        g.lineStyle(2.5, col, 0.7);
+        g.strokeCircle(c.worldX, c.centerY, 16);
+      } else {
+        const ex = c.worldX + dx * 26;
+        const ey = c.centerY + dy * 26;
+        g.lineStyle(3, col, 0.8);
+        g.lineBetween(c.worldX - dx * 26, c.centerY - dy * 26, ex, ey);
+        g.lineBetween(ex, ey, ex - dx * 9 - dy * 7, ey - dy * 9 + dx * 7);
+        g.lineBetween(ex, ey, ex - dx * 9 + dy * 7, ey - dy * 9 - dx * 7);
+      }
     }
   }
 

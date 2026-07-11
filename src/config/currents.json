@@ -1,0 +1,17 @@
+{
+  "_doc": "Currents program knobs. Every design fork lives here as a variable so it can be sandboxed. modes.*.cells default false ⇒ existing modes stay bit-identical; enable per mode, via ?currents=1, or in the Currents Sandbox. See docs/currents/CURRENTS_PROGRAM.md.",
+  "modes": {
+    "classic": { "cells": false, "surge": false },
+    "dive": { "cells": false, "surge": false },
+    "powerdive": { "cells": false, "surge": false }
+  },
+  "cells": {
+    "intensity": 1.0,
+    "spacing": 300,
+    "marginY": 150,
+    "firstX": 760,
+    "kinds": ["updraft", "downwash", "crosscut", "sidewinder", "boil", "drain", "eddy-cw", "eddy-ccw", "tailwind", "headwind", "geyser", "launch-ramp"]
+  },
+  "budgets": { "upFrac": 0.7, "downFrac": 0.5, "latFrac": 0.8 },
+  "surge": { "everySecMin": 60, "everySecMax": 90, "holdSec": 4.0, "rampSec": 0.7, "intensity": 1.0, "lethal": false }
+}
