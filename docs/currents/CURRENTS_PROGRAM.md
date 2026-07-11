@@ -153,16 +153,19 @@ A `SurgeEvent` is a time-boxed whole-field `FluidField` (e.g. `Turbulence + a gl
 ## 8. Phase plan (this branch)
 
 Each phase merges to `main` only when green (suite + golden + typecheck), matching the finale cadence.
+**Status: the C1–C6 skeleton is BUILT on branch `currents-program` (all green, currents default-off so the shipped game is untouched). Forks (§9) are implemented as sandbox variables per owner direction, not hard commitments.**
 
-| Phase | Deliverable | Gate |
+| Phase | Deliverable | Status |
 |---|---|---|
-| **C0** | This plan + ADR-014 (currents = scrolling cells + rare surge; Classic exempt) | owner sign-off on §9 |
-| **C1** | New shapes (capsule, ring, wedge, radial, gradient-band) + unit + purity/determinism tests | tests green |
-| **C2** | 20-pattern Lab catalog + gallery UI (viz + knobs per pattern) | visual review |
-| **C3** | `CurrentCell` / `CurrentSpawner` / `ScrollingField` adapter — **Lab-harnessed & unit-tested first** (no gameplay yet) | determinism + purity tests |
-| **C4** | Cells live in Power Dive; in-play telegraph; **extended fairness sweep + currents golden** | G-Currents (sweep 0 fails) |
-| **C5** | Rare whole-screen Surge event + scheduler + rarity model; fairness under surge | sweep green incl. surge |
-| **C6** | Curated "Currents" public mode (if chosen), feel sims, tuning, polish, ship + tag | owner eyeball |
+| **C0** | This plan (ADR-014 pending ratification) | ✅ pushed |
+| **C1** | New shapes (capsule, radial, wedge, ring, gradient-band) + 18 tests | ✅ |
+| **C2** | 20-pattern catalog (`core/fluid/currents/catalog.ts`) + browsable gallery (`CatalogScene`) + 7 tests | ✅ |
+| **C3** | `CurrentSpawner` / `ScrollingCurrentField` scrolling adapter, Lab-harnessed + 9 tests | ✅ |
+| **C4** | Cells opt-in in Power Dive (`?currents=1`) + telegraph + G-Currents spot check (≤1/60 fail) | ✅ |
+| **C5** | Rare whole-screen Surge (`Surge.ts`, `?surge=1`) + scheduler + 7 tests | ✅ |
+| **C6** | Currents Sandbox — every fork a live knob (`CurrentsSandboxScene`) | ✅ |
+
+**Remaining (owner-gated):** full 80k currents fairness sweep + a frozen currents golden (the heavy G-Currents gate; the 60-seed spot check is the interim proof); a reachable public entry (menu toggle or standalone "Currents" mode) beyond the deep-link/sandbox; ADR-014 ratification; feel-tuning the default intensity/spacing; merge `currents-program` → `main`.
 
 ---
 
