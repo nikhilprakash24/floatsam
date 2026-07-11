@@ -61,12 +61,19 @@ export class MenuScene extends Phaser.Scene {
       fontSize: 20,
       accent: 0x4aa3e0,
     });
-    makeButton(this, W / 2, H * 0.755, '✨  FABLE CURRENTS', () => this.scene.start('FableLab'), {
+    makeButton(this, W / 2, H * 0.752, '✨  FABLE CURRENTS', () => this.scene.start('FableLab'), {
       variant: 'ghost',
       width: 250,
-      height: 46,
+      height: 44,
       fontSize: 18,
       accent: 0x8f6fd6,
+    });
+    makeButton(this, W / 2, H * 0.822, '🗂  CURRENTS CATALOG', () => this.scene.start('Catalog'), {
+      variant: 'ghost',
+      width: 250,
+      height: 44,
+      fontSize: 18,
+      accent: 0x4ad0c0,
     });
 
     const sfx = this.registry.get('sfx') as SfxSynth;
