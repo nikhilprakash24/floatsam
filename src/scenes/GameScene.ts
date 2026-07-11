@@ -14,6 +14,9 @@ import { PlayerView } from '../entities/PlayerView';
 
 const D = difficultyJson;
 
+// A7: per-mode water grading (Classic neutral · Dive cooler · Power Dive warmer).
+const MODE_TINT: Record<string, number> = { classic: 0xffffff, dive: 0xa8cce0, powerdive: 0xe8cdaa };
+
 interface GateView {
   top: Phaser.GameObjects.Image;
   bottom: Phaser.GameObjects.Image;
@@ -33,6 +36,7 @@ export class GameScene extends Phaser.Scene {
   private fx: Phaser.GameObjects.GameObject[] = [];
   private fxChecked = false;
   private mode!: GameMode;
+  private modeTint = 0xffffff;
   private bestKey!: string;
   private debugHook = false;
   private calmMotion = false;
@@ -85,16 +89,13 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('score', 0);
 
     // A1+A7: depth-gradient water, graded per mode (Dive cooler, PD warmer).
-    const MODE_TINT: Record<string, number> = { classic: 0xffffff, dive: 0xa8cce0, powerdive: 0xe8cdaa };
-    this.add
-      .image(D.worldWidth / 2, D.worldHeight / 2, 'bgGradient')
-      .setDepth(0)
-      .setTint(MODE_TINT[mode.id] ?? 0xffffff);
+    this.modeTint = MODE_TINT[mode.id] ?? 0xffffff;
+    this.add.image(D.worldWidth / 2, D.worldHeight / 2, 'bgGradient').setDepth(0).setTint(this.modeTint);
     // Distant seamounts, graded with the mode tint, drifting slowest of all.
     this.bgMountains = this.add
       .tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'seamounts')
       .setDepth(0.5)
-      .setTint(MODE_TINT[mode.id] ?? 0xffffff);
+      .setTint(this.modeTint);
     this.bgFar = this.add.tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'bgFar').setDepth(1);
     this.bgMid = this.add.tileSprite(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 'bgMid').setDepth(2);
 
@@ -196,8 +197,51 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.addEffects();
+    this.scheduleWhales();
     this.bindVisibilityPause();
     this.scene.launch('Hud');
+  }
+
+  /**
+   * Rare ambient whale fly-by through the seamount layer (wildcard). Pure
+   * decoration — it never touches the sim, so the golden master is untouched.
+   * Skipped on weak GPUs (fxLow) and under reduced motion, where extra
+   * drifting motion isn't wanted.
+   */
+  private scheduleWhales(): void {
+    if (this.registry.get('fxLow') === true || this.calmMotion) return;
+    const next = (): void => {
+      // 8–28 s between passes; the first is delayed so the run settles first.
+      const delay = 8000 + Math.random() * 20000;
+      this.time.delayedCall(delay, () => {
+        this.spawnWhale();
+        next();
+      });
+    };
+    next();
+  }
+
+  private spawnWhale(): void {
+    const y = D.worldHeight * (0.16 + Math.random() * 0.32);
+    const scale = 0.7 + Math.random() * 0.55;
+    const travel = 15000 + Math.random() * 7000;
+    const whale = this.add
+      .image(D.worldWidth + 160, y, 'whale')
+      .setDepth(0.6) // between the seamounts (0.5) and the far kelp layer (1)
+      .setAlpha(0)
+      .setScale(scale)
+      .setTint(this.modeTint);
+    // Fade in, glide across, fade out near the far edge, then dispose.
+    this.tweens.add({ targets: whale, alpha: 0.24, duration: 2600, ease: 'Sine.easeOut' });
+    this.tweens.add({ targets: whale, alpha: 0, delay: travel - 2600, duration: 2600, ease: 'Sine.easeIn' });
+    this.tweens.add({ targets: whale, y: y + 16, duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({
+      targets: whale,
+      x: -190,
+      duration: travel,
+      ease: 'Linear',
+      onComplete: () => whale.destroy(),
+    });
   }
 
   /** Caustic light shafts + vignette; cheap, and removed if FPS dips (§8). */
