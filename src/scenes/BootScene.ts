@@ -71,6 +71,7 @@ export class BootScene extends Phaser.Scene {
       lab: 'Lab',
       fable: 'FableLab',
       catalog: 'Catalog',
+      'currents-sandbox': 'CurrentsSandbox',
       pace: 'PaceSelect',
       mode: 'ModeSelect',
       character: 'CharacterSelect',

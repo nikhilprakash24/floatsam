@@ -13,6 +13,7 @@ import { SandboxScene } from './scenes/SandboxScene';
 import { LabScene } from './scenes/LabScene';
 import { FableLabScene } from './scenes/FableLabScene';
 import { CatalogScene } from './scenes/CatalogScene';
+import { CurrentsSandboxScene } from './scenes/CurrentsSandboxScene';
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -51,5 +52,6 @@ new Phaser.Game({
     LabScene,
     FableLabScene,
     CatalogScene,
+    CurrentsSandboxScene,
   ],
 });
