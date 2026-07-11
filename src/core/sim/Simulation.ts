@@ -10,6 +10,7 @@ import { createRng } from '../rng';
 import { CompositeField } from '../fluid/fields/CompositeField';
 import { CurrentSpawner, ScrollingCurrentField, type CurrentCell } from '../fluid/currents/CurrentSpawner';
 import { type CellKind } from '../fluid/currents/cells';
+import { SurgeScheduler, SurgeField, type SurgeConfig } from '../fluid/currents/Surge';
 import currentsCfg from '../../config/currents.json';
 import powerJson from '../../config/modes/powerdive.json';
 
@@ -76,6 +77,8 @@ export class Simulation {
   private readonly massScale: number;
   /** Present only when currents are enabled for this run (opt-in, default off). */
   private readonly currentSpawner?: CurrentSpawner;
+  /** Present only when the rare whole-screen Surge is enabled for this run. */
+  private readonly surge?: SurgeScheduler;
 
   constructor(
     readonly mode: GameMode,
@@ -85,6 +88,8 @@ export class Simulation {
     pace = 1,
     /** Override the config's per-mode currents flag (sandbox / ?currents=1). */
     currents?: boolean,
+    /** Override the config's per-mode surge flag (sandbox / ?surge=1). */
+    surge?: boolean,
   ) {
     const eff = deriveEffective(mode.physics, character);
     this.physics = eff;
@@ -129,9 +134,18 @@ export class Simulation {
         },
         createRng((seed ^ 0x9e3779b9) >>> 0),
       );
+      // The rare whole-screen Surge (opt-in within currents). Its own rng stream
+      // and shares the cells' single clamp (passed as `extra`), so cells + surge
+      // can never jointly exceed the escape budget.
+      const surgeOn = surge ?? modeCfg?.surge ?? false;
+      let extra: SurgeField | undefined;
+      if (surgeOn) {
+        this.surge = new SurgeScheduler(currentsCfg.surge as SurgeConfig, createRng((seed ^ 0x85ebca6b) >>> 0));
+        extra = new SurgeField(this.surge, currentsCfg.surge.intensity);
+      }
       field = new CompositeField([
         field,
-        new ScrollingCurrentField(this.currentSpawner, tUp * B.upFrac, tDown * B.downFrac, tUp * B.latFrac),
+        new ScrollingCurrentField(this.currentSpawner, tUp * B.upFrac, tDown * B.downFrac, tUp * B.latFrac, extra),
       ]);
     }
     this.field = field;
@@ -223,6 +237,7 @@ export class Simulation {
       this.spawner.update(this.physics.fixedStep, this.score);
       // Currents scroll at the world speed so cells align with what's drawn.
       this.currentSpawner?.update(this.physics.fixedStep, scrollSpeedFor(this.score, this.difficulty));
+      this.surge?.update(this.physics.fixedStep);
 
       // Free-x modes score on the body's actual x (it can move forward past a
       // gate); fixed-x modes score on the static player line (bit-identical).
@@ -287,5 +302,10 @@ export class Simulation {
 
   get hasCurrents(): boolean {
     return this.currentSpawner !== undefined;
+  }
+
+  /** Surge envelope in [0,1] for the screen cue; 0 when no surge is configured. */
+  get surgeRamp(): number {
+    return this.surge?.ramp ?? 0;
   }
 }

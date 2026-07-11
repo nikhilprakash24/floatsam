@@ -29,6 +29,7 @@ export class GameScene extends Phaser.Scene {
   private gateViews: GateView[] = [];
   private bgMountains!: Phaser.GameObjects.TileSprite;
   private currentsFx?: Phaser.GameObjects.Graphics;
+  private surgeCue?: Phaser.GameObjects.Rectangle;
   private bgFar!: Phaser.GameObjects.TileSprite;
   private bgMid!: Phaser.GameObjects.TileSprite;
   private bubbles!: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -77,6 +78,7 @@ export class GameScene extends Phaser.Scene {
     // Currents are opt-in: ?currents=1 or a registry flag (default off → the
     // config decides, which is off for every mode). Sandbox variable per §9.
     const currents = params.get('currents') === '1' || this.registry.get('currents') === true ? true : undefined;
+    const surge = params.get('surge') === '1' || this.registry.get('surge') === true ? true : undefined;
     this.sim = new Simulation(
       mode,
       character,
@@ -91,6 +93,7 @@ export class GameScene extends Phaser.Scene {
       },
       pace,
       currents,
+      surge,
     );
     this.registry.set('score', 0);
 
@@ -133,6 +136,11 @@ export class GameScene extends Phaser.Scene {
     // tinted footprint + flow arrow per cell, so a shove is never a surprise.
     // Sits in the water column below the reef so pipes still occlude it.
     if (this.sim.hasCurrents) this.currentsFx = this.add.graphics().setDepth(4);
+    // Surge screen cue: a storm-tinted wash that tracks the surge envelope.
+    this.surgeCue = this.add
+      .rectangle(D.worldWidth / 2, D.worldHeight / 2, D.worldWidth, D.worldHeight, 0x1a3a2a)
+      .setDepth(28)
+      .setAlpha(0);
 
     this.gateViews = this.sim.gates().map(() => ({
       top: this.add.image(0, 0, 'reef0').setOrigin(0.5, 1).setFlipY(true).setDepth(5),
@@ -377,6 +385,7 @@ export class GameScene extends Phaser.Scene {
     this.bgMid.tilePositionX += speed * 0.35 * (delta / 1000);
 
     if (this.currentsFx) this.drawCurrents();
+    if (this.surgeCue) this.surgeCue.setAlpha(this.sim.surgeRamp * 0.22);
     this.layoutGates(alpha, speed);
 
     const r = this.sim.renderState(alpha);

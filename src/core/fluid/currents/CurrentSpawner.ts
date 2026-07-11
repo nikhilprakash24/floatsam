@@ -92,6 +92,9 @@ export class ScrollingCurrentField implements FluidField {
     private readonly upMax: number,
     private readonly downMax: number,
     private readonly latMax: number,
+    /** Optional whole-screen field (e.g. a Surge) summed in BEFORE the clamp,
+     *  so cells + surge share one escape-budget clamp and can't jointly exceed it. */
+    private readonly extra?: FluidField,
   ) {}
 
   sampleForce(bodyX: number, bodyY: number, t: number): Vec2 {
@@ -103,6 +106,11 @@ export class ScrollingCurrentField implements FluidField {
       const f = c.field.sampleForce(bodyX - c.worldX, bodyY, t);
       fx += f.x;
       fy += f.y;
+    }
+    if (this.extra) {
+      const e = this.extra.sampleForce(bodyX, bodyY, t);
+      fx += e.x;
+      fy += e.y;
     }
     return { x: clamp(fx, -this.latMax, this.latMax), y: clamp(fy, -this.upMax, this.downMax) };
   }
