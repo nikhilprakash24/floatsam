@@ -1,0 +1,178 @@
+<title>Currents Program — Engineering Report</title>
+<style>
+  :root{
+    --abyss1:#06181f; --abyss2:#0b2b38; --panel:#0e2c39; --panel2:#123745;
+    --ink:#e6f3f8; --muted:#93b6c3; --faint:#628696; --line:rgba(120,205,220,.15);
+    --teal:#46d0c0; --kelp:#5bd0a2; --amber:#f2c46b; --coral:#ff8f6f;
+    --sans:"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  .doc{
+    background:
+      radial-gradient(120% 60% at 50% -8%, #12586055 0%, transparent 60%),
+      linear-gradient(180deg,#0b3543 0%,#082733 26%,#061c26 70%,#04141b 100%);
+    color:var(--ink); font-family:var(--sans); line-height:1.62;
+    min-height:100vh; padding-bottom:64px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:800px;margin-inline:auto;padding:0 30px}
+  .kick{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal)}
+  .masthead{padding:60px 0 30px;border-bottom:1px solid var(--line)}
+  .masthead h1{font-size:clamp(30px,5.4vw,50px);line-height:1.02;font-weight:800;letter-spacing:-.02em;margin:16px 0 0;text-wrap:balance}
+  .masthead .sub{color:var(--muted);font-size:18px;margin:14px 0 0;max-width:60ch}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:26px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:999px;border:1px solid;line-height:1.4}
+  .pill.teal{color:var(--teal);border-color:#46d0c055;background:#46d0c012}
+  section{padding:40px 0 4px;border-bottom:1px solid var(--line)}
+  h2{display:flex;align-items:baseline;gap:14px;font-size:24px;font-weight:800;letter-spacing:-.01em;margin:0 0 18px}
+  h2 .n{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--teal);letter-spacing:.04em}
+  h3{font-size:16px;font-weight:700;color:var(--ink);margin:26px 0 8px}
+  p{margin:0 0 14px;max-width:66ch}
+  .lead{font-size:19px;color:#cfe6ee;max-width:64ch}
+  strong{color:#fff;font-weight:650}
+  a{color:var(--teal);text-decoration:none;border-bottom:1px solid #46d0c04d}
+  ul{margin:0 0 16px;padding-left:20px} li{margin:6px 0;max-width:64ch}
+  .tblwrap{overflow-x:auto;margin:8px 0 20px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);font-weight:600}
+  tbody tr:nth-child(odd){background:#ffffff05}
+  td.num,th.num{font-variant-numeric:tabular-nums;font-family:var(--mono);white-space:nowrap}
+  .mono{font-family:var(--mono)}
+  .chip{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:5px;line-height:1.5}
+  .chip.ok{color:var(--kelp);background:#5bd0a218}
+  .chip.med{color:var(--amber);background:#f2c46b18}
+  .chip.low{color:var(--muted);background:#93b6c315}
+  .callout{background:linear-gradient(180deg,#0e3a4733,#0e2c3966);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:10px;padding:18px 20px;margin:18px 0}
+  .callout p:last-child{margin-bottom:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:8px 0 20px}
+  .card{background:#0e2c3966;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card .big{font-size:30px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .card .lbl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:4px}
+  footer{padding:30px 0 0;color:var(--faint);font-family:var(--mono);font-size:12px}
+  @media print{ .wrap{max-width:none;padding:0} .doc{padding-bottom:0} section{break-inside:avoid} }
+</style>
+
+<div class="doc">
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kick">Internal · Engineering Report</div>
+      <h1>Currents Program</h1>
+      <p class="sub">Bringing water currents out of the isolated Lab and into the actual game — as a tested, opt-in system that never touches the shipped build.</p>
+      <div class="meta">
+        <span>Project&nbsp; <b>Floatsam</b></span>
+        <span>Branch&nbsp; <b>currents-program</b></span>
+        <span>Date&nbsp; <b>2026-07-11</b></span>
+        <span>PR&nbsp; <b>#2 open</b></span>
+        <span class="pill teal">C1–C6 built · default-off</span>
+      </div>
+    </header>
+
+    <section>
+      <h2><span class="n">§1</span> Executive summary</h2>
+      <p class="lead">We answered one product question — <em>how do currents enter the game?</em> — and shipped a full, tested implementation skeleton across six phases on an isolated branch.</p>
+      <ul>
+        <li><strong>The design question is resolved, grounded in the code.</strong> The scrolling game fixes the player's x, so a whole-screen field only ever touches one vertical column. The everyday unit is therefore a <strong>localized cell</strong> that scrolls in like a gate; a whole-screen field is a <strong>rare Surge</strong> event.</li>
+        <li><strong>Zero risk to the shipped game.</strong> Currents are opt-in and default-off; a bit-identical test proves the off path is byte-for-byte the old behavior. Classic's golden master and the 80,000-run fairness matrix are untouched.</li>
+        <li><strong>Fairness is guaranteed by construction.</strong> Cells and surge share one budget clamp anchored to the weakest creature. The weakest reference bot still clears 8 gates through currents ~98% of the time.</li>
+        <li><strong>Every design fork is a tunable variable</strong>, per direction — nothing hard-committed.</li>
+      </ul>
+      <div class="grid">
+        <div class="card"><div class="big">6</div><div class="lbl">phases built (C1–C6)</div></div>
+        <div class="card"><div class="big">156</div><div class="lbl">tests green (+44)</div></div>
+        <div class="card"><div class="big">+2,214</div><div class="lbl">lines, 19 new files</div></div>
+        <div class="card"><div class="big">0</div><div class="lbl">changes to shipped game</div></div>
+      </div>
+      <div class="callout"><p><strong>Recommendation:</strong> merge <span class="mono">currents-program</span> → <span class="mono">main</span> (zero-risk, unlocks the Catalog &amp; Sandbox at the live URL), then prioritize a player-facing entry point and the full fairness sweep before promoting currents from dev-reachable to public.</p></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§2</span> The core decision</h2>
+      <p>The engine has exactly one extension point: <span class="mono">FluidField.sampleForce(x, y, t)</span> returns an acceleration summed into the body. In the scrolling game the player's x is fixed, so a screen-anchored field is sampled at one column forever — a beautiful 2-D current collapses to a 1-D wobble.</p>
+      <p>So currents that you <em>travel through</em> must live in world coordinates and move. That reframes the whole feature: <strong>localized current cells are the grammar; a rare whole-screen Surge is the punctuation.</strong> The owner's instinct to keep the whole-screen effect rare is now the architecture, not a preference.</p>
+    </section>
+
+    <section>
+      <h2><span class="n">§3</span> What was built</h2>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Phase</th><th>Deliverable</th><th class="num">Tests</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">C1</td><td>Five pure shape primitives: Capsule (finite lane), Radial (boil/drain), Wedge (ramp), Ring (annulus), GradientBand (shear)</td><td class="num">18</td></tr>
+          <tr><td class="mono">C2</td><td>20-pattern catalog (helpful/hostile + scope + game-clearance) &amp; a browsable free-swim gallery</td><td class="num">7</td></tr>
+          <tr><td class="mono">C3</td><td>Scrolling <span class="mono">CurrentSpawner</span> + <span class="mono">ScrollingCurrentField</span> adapter (pooled, seeded, world→local, single clamp)</td><td class="num">9</td></tr>
+          <tr><td class="mono">C4</td><td>Cells opt-in in Power Dive + in-play telegraph + fairness spot check</td><td class="num">3</td></tr>
+          <tr><td class="mono">C5</td><td>Rare whole-screen Surge (envelope scheduler + field, shares the cell clamp)</td><td class="num">7</td></tr>
+          <tr><td class="mono">C6</td><td>Currents Sandbox — every design fork a live slider</td><td class="num">—</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§4</span> Architecture</h2>
+      <h3>The seam</h3>
+      <p>Currents plug into <span class="mono">sampleForce</span> and nowhere else — <span class="mono">FluidBody</span>, the game loop, and all locked Classic files are untouched.</p>
+      <h3>Cells</h3>
+      <p>A cell is a localized field built once in a local frame (x = 0), placed at a <span class="mono">worldX</span> that scrolls left. <span class="mono">ScrollingCurrentField</span> maps the body into each cell's frame, sums, and clamps. The spawner mirrors the pooled, seeded gate spawner, so replay, golden, and fairness all hold.</p>
+      <h3>Surge</h3>
+      <p>A seeded scheduler produces an envelope in [0,1] (idle → ramp-in → hold → ramp-out); the surge field is whole-screen turbulence + drift scaled by it, summed <em>before</em> the clamp so cells + surge share one escape budget.</p>
+      <h3>Determinism</h3>
+      <p>All fields are pure in (x, y, t); spawner and surge run on their own seeded streams — same seed, same run.</p>
+    </section>
+
+    <section>
+      <h2><span class="n">§5</span> Quality &amp; fairness</h2>
+      <ul>
+        <li><strong>156 unit/sim tests green</strong> (44 new). Typecheck clean. Classic golden re-verified each phase.</li>
+        <li><strong>Fairness by construction:</strong> a single budget clamp anchored to the weakest creature (Otter) — intensity can exceed 1.0 and the emitted force stays escapable.</li>
+        <li><strong>G-Currents spot check (interim):</strong> 60 seeds × 4 creatures, currents-on Power Dive, reference bot — ≤1/60 failures (~98% clearance). The full 80k sweep + a frozen currents golden is the outstanding formal gate.</li>
+        <li><strong>Bit-identical guard:</strong> currents-off is byte-for-byte identical whether the flag is omitted or explicitly false.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="n">§6</span> Design forks as sandbox variables</h2>
+      <p>Per direction, the open decisions are variables, not commitments — all in <span class="mono">src/config/currents.json</span>, tunable live in the Sandbox.</p>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Fork</th><th>Lives in</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td>Which modes carry currents</td><td class="mono">modes.*.cells / .surge</td><td>all off</td></tr>
+          <tr><td>Catalog size / kinds</td><td class="mono">cells.kinds</td><td>12 cell kinds</td></tr>
+          <tr><td>Cell density</td><td class="mono">cells.spacing</td><td class="num">300 px</td></tr>
+          <tr><td>Intensity</td><td class="mono">cells.intensity</td><td class="num">1.0</td></tr>
+          <tr><td>Surge rarity / lethality</td><td class="mono">surge.*</td><td>60–90 s · non-lethal</td></tr>
+          <tr><td>Escape-budget headroom</td><td class="mono">budgets.*</td><td>0.7 / 0.5 / 0.8</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§7</span> Risk register</h2>
+      <div class="tblwrap"><table>
+        <thead><tr><th>#</th><th>Risk</th><th>Sev</th><th>Mitigation / status</th></tr></thead>
+        <tbody>
+          <tr><td class="num">R1</td><td>Spot check ≠ full sweep; a rare seed could be unfair</td><td><span class="chip med">Med</span></td><td>Clamp bounds per-frame force; full 80k sweep + golden tracked</td></tr>
+          <tr><td class="num">R2</td><td>Joint gate + current difficulty untuned (escapable ≠ fun)</td><td><span class="chip med">Med</span></td><td>Sandbox exists for feel-tuning; defaults conservative</td></tr>
+          <tr><td class="num">R3</td><td>No player-facing entry yet</td><td><span class="chip low">Low·int</span></td><td>Deep-links + dev scenes; menu/mode entry scoped next</td></tr>
+          <tr><td class="num">R4</td><td>Telegraph draw + sampling perf at high density</td><td><span class="chip low">Low</span></td><td>Cheap x-cull; simple Graphics; monitor if density raised</td></tr>
+          <tr><td class="num">R5</td><td>Preview panel unreachable this session (shared port)</td><td><span class="chip low">Low</span></td><td>Verified via independent Playwright capture</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§8</span> Recommended next steps</h2>
+      <ul>
+        <li><strong>Merge PR #2</strong> (zero-risk) → Catalog + Sandbox live for review.</li>
+        <li><strong>Feel-tuning pass</strong> in the Sandbox → lock default intensity/spacing.</li>
+        <li><strong>Player entry:</strong> ship a "Currents" toggle or mode so users can actually play it.</li>
+        <li><strong>Formal G-Currents:</strong> full 80k sweep + frozen currents golden.</li>
+        <li><strong>Ratify ADR-014</strong>, then graduate candidate patterns (whirl-pair, shear-step, breathing-wall, roaming-eddy) as each passes the sweep.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Companion: docs/currents/CURRENTS_PROGRAM.md (plan of record) · PR #2 · Floatsam / nikhilprakash24. Internal — engineering.
+    </footer>
+  </div>
+</div>

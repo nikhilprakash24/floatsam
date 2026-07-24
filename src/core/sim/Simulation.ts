@@ -2,11 +2,17 @@ import { createBody, stepBody, type FluidBodyState, type FluidPhysicsConfig } fr
 import type { FluidField } from '../fluid/FluidField';
 import type { InputPolicy } from '../input/InputPolicy';
 import type { GameMode } from '../modes/GameMode';
-import { deriveEffective, type CharacterProfile } from '../character/CharacterProfile';
-import { GateSpawner, type DifficultyConfig, type Gate } from '../spawn/Spawner';
+import { deriveEffective, OTTER, type CharacterProfile } from '../character/CharacterProfile';
+import { GateSpawner, scrollSpeedFor, type DifficultyConfig, type Gate } from '../spawn/Spawner';
 import { clampsFor, gapScaleFor } from '../spawn/clampsFor';
 import { collectPassedGates } from '../score/score';
 import { createRng } from '../rng';
+import { CompositeField } from '../fluid/fields/CompositeField';
+import { CurrentSpawner, ScrollingCurrentField, type CurrentCell } from '../fluid/currents/CurrentSpawner';
+import { type CellKind } from '../fluid/currents/cells';
+import { SurgeScheduler, SurgeField, type SurgeConfig } from '../fluid/currents/Surge';
+import currentsCfg from '../../config/currents.json';
+import powerJson from '../../config/modes/powerdive.json';
 
 /** The umbrella shape of physics.json (integrator + render/hitbox extras). */
 export interface PhysicsConfigFull extends FluidPhysicsConfig {
@@ -69,6 +75,10 @@ export class Simulation {
   private readonly field: FluidField;
   private readonly policy: InputPolicy;
   private readonly massScale: number;
+  /** Present only when currents are enabled for this run (opt-in, default off). */
+  private readonly currentSpawner?: CurrentSpawner;
+  /** Present only when the rare whole-screen Surge is enabled for this run. */
+  private readonly surge?: SurgeScheduler;
 
   constructor(
     readonly mode: GameMode,
@@ -76,6 +86,10 @@ export class Simulation {
     seed: number,
     private readonly events: SimEvents = {},
     pace = 1,
+    /** Override the config's per-mode currents flag (sandbox / ?currents=1). */
+    currents?: boolean,
+    /** Override the config's per-mode surge flag (sandbox / ?surge=1). */
+    surge?: boolean,
   ) {
     const eff = deriveEffective(mode.physics, character);
     this.physics = eff;
@@ -93,7 +107,48 @@ export class Simulation {
             speedRampPerPoint: mode.spawn.speedRampPerPoint * pace,
           };
     this.massScale = eff.massScale;
-    this.field = mode.makeField(eff);
+
+    // Currents seam (currents program C4). Opt-in and default-off, so every
+    // existing run — Classic golden included — is bit-identical: when currents
+    // are off, `field` is exactly `mode.makeField(eff)`. When on, a seeded
+    // CurrentSpawner (its OWN rng stream, so gate spawning is untouched) feeds a
+    // ScrollingCurrentField composed on top, clamped to the weakest creature's
+    // escape budget so escapability is guaranteed no matter how cells stack.
+    let field = mode.makeField(eff);
+    const modeCfg = (currentsCfg.modes as Record<string, { cells: boolean; surge: boolean }>)[mode.id];
+    const currentsOn = currents ?? modeCfg?.cells ?? false;
+    if (currentsOn) {
+      const cc = currentsCfg.cells;
+      const B = currentsCfg.budgets;
+      const tUp = powerJson.biaxial.thrustUp * OTTER.thrustScale;
+      const tDown = powerJson.biaxial.thrustDown * OTTER.thrustScale;
+      this.currentSpawner = new CurrentSpawner(
+        {
+          worldW: this.difficulty.worldWidth,
+          worldH: this.difficulty.worldHeight,
+          spacing: cc.spacing,
+          intensity: cc.intensity,
+          kinds: cc.kinds as CellKind[],
+          firstX: cc.firstX,
+          marginY: cc.marginY,
+        },
+        createRng((seed ^ 0x9e3779b9) >>> 0),
+      );
+      // The rare whole-screen Surge (opt-in within currents). Its own rng stream
+      // and shares the cells' single clamp (passed as `extra`), so cells + surge
+      // can never jointly exceed the escape budget.
+      const surgeOn = surge ?? modeCfg?.surge ?? false;
+      let extra: SurgeField | undefined;
+      if (surgeOn) {
+        this.surge = new SurgeScheduler(currentsCfg.surge as SurgeConfig, createRng((seed ^ 0x85ebca6b) >>> 0));
+        extra = new SurgeField(this.surge, currentsCfg.surge.intensity);
+      }
+      field = new CompositeField([
+        field,
+        new ScrollingCurrentField(this.currentSpawner, tUp * B.upFrac, tDown * B.downFrac, tUp * B.latFrac, extra),
+      ]);
+    }
+    this.field = field;
     this.policy = mode.makeInputPolicy(eff);
     this.spawner = new GateSpawner(
       this.difficulty,
@@ -180,6 +235,9 @@ export class Simulation {
 
     if (this.phase === 'PLAY') {
       this.spawner.update(this.physics.fixedStep, this.score);
+      // Currents scroll at the world speed so cells align with what's drawn.
+      this.currentSpawner?.update(this.physics.fixedStep, scrollSpeedFor(this.score, this.difficulty));
+      this.surge?.update(this.physics.fixedStep);
 
       // Free-x modes score on the body's actual x (it can move forward past a
       // gate); fixed-x modes score on the static player line (bit-identical).
@@ -235,5 +293,19 @@ export class Simulation {
 
   gates(): readonly Gate[] {
     return this.spawner.gates;
+  }
+
+  /** Live current cells for rendering/telegraph; empty when currents are off. */
+  currentCells(): readonly CurrentCell[] {
+    return this.currentSpawner?.cells ?? [];
+  }
+
+  get hasCurrents(): boolean {
+    return this.currentSpawner !== undefined;
+  }
+
+  /** Surge envelope in [0,1] for the screen cue; 0 when no surge is configured. */
+  get surgeRamp(): number {
+    return this.surge?.ramp ?? 0;
   }
 }

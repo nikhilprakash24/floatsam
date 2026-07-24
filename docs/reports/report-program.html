@@ -1,0 +1,150 @@
+<title>Floatsam — Program Report</title>
+<style>
+  :root{
+    --abyss1:#06181f; --abyss2:#0b2b38; --panel:#0e2c39; --panel2:#123745;
+    --ink:#e6f3f8; --muted:#93b6c3; --faint:#628696; --line:rgba(120,205,220,.15);
+    --teal:#46d0c0; --kelp:#5bd0a2; --amber:#f2c46b; --coral:#ff8f6f;
+    --sans:"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  .doc{
+    background:
+      radial-gradient(120% 60% at 50% -8%, #12586055 0%, transparent 60%),
+      linear-gradient(180deg,#0b3543 0%,#082733 26%,#061c26 70%,#04141b 100%);
+    color:var(--ink); font-family:var(--sans); line-height:1.62;
+    min-height:100vh; padding-bottom:64px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:820px;margin-inline:auto;padding:0 30px}
+  .kick{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal)}
+  .masthead{padding:58px 0 26px;border-bottom:1px solid var(--line)}
+  .masthead h1{font-size:clamp(30px,5.4vw,50px);line-height:1.02;font-weight:800;letter-spacing:-.02em;margin:16px 0 0;text-wrap:balance}
+  .masthead .sub{color:var(--muted);font-size:18px;margin:14px 0 0;max-width:62ch}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:24px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  .audience{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0 0}
+  .aud{background:#0e2c3966;border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .aud .who{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:5px}
+  .aud .what{font-size:13px;color:var(--muted);line-height:1.45}
+  section{padding:38px 0 4px;border-bottom:1px solid var(--line)}
+  h2{display:flex;align-items:baseline;gap:14px;font-size:24px;font-weight:800;letter-spacing:-.01em;margin:0 0 16px}
+  h2 .n{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--teal)}
+  p{margin:0 0 14px;max-width:66ch}
+  .lead{font-size:19px;color:#cfe6ee;max-width:64ch}
+  strong{color:#fff;font-weight:650}
+  ul{margin:0 0 16px;padding-left:20px} li{margin:6px 0;max-width:64ch}
+  .mono{font-family:var(--mono)}
+  .tblwrap{overflow-x:auto;margin:8px 0 20px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);font-weight:600}
+  tbody tr:nth-child(odd){background:#ffffff05}
+  td.num,th.num{font-variant-numeric:tabular-nums;font-family:var(--mono);white-space:nowrap}
+  .chip{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:5px;line-height:1.5;white-space:nowrap}
+  .chip.ok{color:var(--kelp);background:#5bd0a218}
+  .chip.prog{color:var(--teal);background:#46d0c016}
+  .chip.med{color:var(--amber);background:#f2c46b18}
+  .chip.low{color:var(--muted);background:#93b6c315}
+  .chip.crit{color:var(--coral);background:#ff8f6f18}
+  .callout{background:linear-gradient(180deg,#0e3a4733,#0e2c3966);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:10px;padding:18px 20px;margin:16px 0}
+  .callout p:last-child{margin-bottom:0}
+  footer{padding:30px 0 0;color:var(--faint);font-family:var(--mono);font-size:12px}
+  @media print{ .wrap{max-width:none;padding:0} .doc{padding-bottom:0} section{break-inside:avoid} .audience{grid-template-columns:repeat(3,1fr)} }
+  @media (max-width:640px){ .audience{grid-template-columns:1fr} }
+</style>
+
+<div class="doc">
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kick">Program Report · Multi-Audience</div>
+      <h1>Floatsam</h1>
+      <p class="sub">Overall progress, the decisions behind it, and the open risks — a single source of truth across product, engineering, and planning.</p>
+      <div class="meta">
+        <span>Date&nbsp; <b>2026-07-11</b></span>
+        <span>Live&nbsp; <b>nikhilprakash24.github.io/floatsam</b></span>
+        <span>Health&nbsp; <b>Green</b></span>
+        <span>Stack&nbsp; <b>Phaser · TypeScript · Vite</b></span>
+      </div>
+      <div class="audience">
+        <div class="aud"><div class="who">Executive</div><div class="what">§1 orientation, §2 progress, §6 roadmap.</div></div>
+        <div class="aud"><div class="who">Engineering</div><div class="what">§3 pillars, §4 decisions, §5 risks.</div></div>
+        <div class="aud"><div class="who">Planning</div><div class="what">§2 status, §4 decisions, §6 what's next.</div></div>
+      </div>
+    </header>
+
+    <section>
+      <h2><span class="n">§1</span> Orientation</h2>
+      <p class="lead">Floatsam is a shipped, live underwater arcade game built on an unusual foundation: the entire game is a deterministic, headless simulation with fairness proven by the thousands of runs — not by playtest vibes.</p>
+      <p>You tap or dive a sea creature through gaps in a reef. Under the hood, a pure-TypeScript fluid-physics core (zero rendering dependencies) runs a fixed-timestep simulation seeded so every run is exactly reproducible. That property is the project's spine: it lets us freeze a "golden" reference run, machine-verify fairness across 80,000 seeded runs, and add features behind hard regression gates.</p>
+    </section>
+
+    <section>
+      <h2><span class="n">§2</span> Progress by track</h2>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Track</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>Core game</td><td><span class="chip ok">Shipped · live</span></td><td>3 modes (Classic / Dive / Power Dive), 4 creatures with trait cards, tempo wrapper, per-mode/creature best scores.</td></tr>
+          <tr><td>Platform</td><td><span class="chip ok">Shipped</span></td><td>PWA (installable, offline), GitHub Actions CI, Pages deploy on every push. Accessibility &amp; best-practices 100.</td></tr>
+          <tr><td>Finale graphics</td><td><span class="chip ok">Shipped · live</span></td><td>Animated creatures, wave title, Fable Currents lab, distant seamount backdrop (replaced light shafts), rare whale fly-by.</td></tr>
+          <tr><td>Currents program</td><td><span class="chip prog">Built · PR open</span></td><td>C1–C6 on a branch: 20-pattern catalog, scrolling current cells in Power Dive, rare whole-screen surge, live-tuning sandbox. Default-off.</td></tr>
+          <tr><td>Currents → public</td><td><span class="chip med">Pending</span></td><td>Full fairness sweep, a player-facing entry, and feel-tuning before promotion.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§3</span> Engineering pillars</h2>
+      <p>Three properties make the codebase unusually safe to extend, and are worth protecting in every future decision:</p>
+      <ul>
+        <li><strong>Determinism.</strong> A seeded, fixed-timestep, Phaser-free simulation core. Same seed ⇒ same run, every platform. Enables replay, golden masters, and headless fairness testing.</li>
+        <li><strong>Fairness by construction.</strong> Difficulty is bounded by derived reachability clamps and (for currents) a budget clamp anchored to the weakest creature — so "is this beatable?" is answered by math and a sweep, not opinion.</li>
+        <li><strong>The golden master.</strong> Classic (Seal) is tuning-locked to a frozen trajectory fixture; any change that would perturb it fails CI. New systems land <em>behind</em> this gate, default-off, proven bit-identical.</li>
+      </ul>
+      <div class="callout"><p>This is why the entire currents program — a large gameplay system — landed with <strong>zero changes to the shipped game</strong> and could ship as a reviewable branch with no blast radius.</p></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§4</span> Key decisions</h2>
+      <div class="tblwrap"><table>
+        <thead><tr><th>Decision</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td>Classic is tuning-locked</td><td>A stable reference the whole test apparatus hangs on; changes need an ADR + fresh sweep.</td></tr>
+          <tr><td>A mode = data + input policy + field factory</td><td>New modes (Dive, Power Dive) add zero risk to existing ones; the pattern scales.</td></tr>
+          <tr><td>Power Dive introduced free-x movement</td><td>The deliberate seam through which lateral currents can matter — designed before currents existed.</td></tr>
+          <tr><td>Currents = scrolling cells + rare surge</td><td>A whole-screen field collapses to one column in a fixed-x scroller; localized cells are the right unit. (ADR-014, pending.)</td></tr>
+          <tr><td>Currents ship opt-in, default-off</td><td>Lets a large feature land without touching the golden master or fairness matrix.</td></tr>
+          <tr><td>Design forks as sandbox variables</td><td>Intensity, density, rarity, mode-coupling are knobs, so decisions become tuning, not debate.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§5</span> Risk register</h2>
+      <div class="tblwrap"><table>
+        <thead><tr><th>#</th><th>Risk</th><th>Sev</th><th>Mitigation / status</th></tr></thead>
+        <tbody>
+          <tr><td class="num">R1</td><td>Currents fairness proven by 60-seed spot check, not the full 80k sweep</td><td><span class="chip med">Med</span></td><td>Budget clamp bounds per-frame force; full sweep + currents golden is the tracked gate before promotion</td></tr>
+          <tr><td class="num">R2</td><td>Currents difficulty escapable but not yet feel-tuned</td><td><span class="chip med">Med</span></td><td>Sandbox built for exactly this; defaults deliberately gentle</td></tr>
+          <tr><td class="num">R3</td><td>No player-facing currents entry yet</td><td><span class="chip low">Low · intended</span></td><td>Deep-links + dev scenes today; menu/mode entry scoped next</td></tr>
+          <tr><td class="num">R4</td><td>Single-maintainer bus factor; large tacit context</td><td><span class="chip med">Med</span></td><td>Extensive in-repo docs, ADRs, plan-of-record, and these reports capture the "why"</td></tr>
+          <tr><td class="num">R5</td><td>Perf headroom (Phaser boot dominates a throttled Lighthouse run)</td><td><span class="chip low">Low</span></td><td>a11y/best-practices 100; deferred-boot optimization logged, not blocking</td></tr>
+          <tr><td class="num">R6</td><td>Fable model window closing (authoring velocity)</td><td><span class="chip low">Low</span></td><td>Work is committed, gated, and documented so it resumes cleanly</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2><span class="n">§6</span> Roadmap — what's next</h2>
+      <ul>
+        <li><strong>Now:</strong> merge the currents branch (zero-risk) to make the Catalog &amp; Sandbox reachable at the live URL.</li>
+        <li><strong>Next:</strong> feel-tuning pass in the Sandbox; choose &amp; build the player-facing currents entry (toggle vs. standalone mode).</li>
+        <li><strong>Then:</strong> full 80k currents fairness sweep + a frozen currents golden; ratify ADR-014.</li>
+        <li><strong>Later:</strong> graduate candidate catalog patterns as each clears the sweep; distribution polish (store packaging, perf boot).</li>
+      </ul>
+    </section>
+
+    <footer>
+      Companion documents: One-Page Brief · Currents Engineering Report · docs/currents/CURRENTS_PROGRAM.md. Floatsam / nikhilprakash24 — internal.
+    </footer>
+  </div>
+</div>

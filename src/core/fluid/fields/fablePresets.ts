@@ -9,7 +9,7 @@ import { TurbulenceField } from './TurbulenceField';
 import { LaneField } from './LaneField';
 import { CenterSeekField } from './CenterSeekField';
 import { BudgetClampField } from './BudgetClampField';
-import { smoothstep } from './math';
+import { SlipstreamField } from './SlipstreamField';
 
 /**
  * FABLE CURRENTS — currents designed as a *difficulty instrument*, not scenery.
@@ -53,23 +53,6 @@ class ScaledField implements FluidField {
   sampleForce(x: number, y: number, t: number): Vec2 {
     const f = this.child.sampleForce(x, y, t);
     return { x: f.x * this.k, y: f.y * this.k };
-  }
-}
-
-/** A tailwind pocket that travels the column on a fixed circuit (pure in t). */
-class SlipstreamField implements FluidField {
-  constructor(
-    private readonly strength: number,
-    private readonly radius = 120,
-    private readonly speed = 90,
-  ) {}
-  sampleForce(x: number, y: number, t: number): Vec2 {
-    const span = W + this.radius * 2;
-    const cx = ((t * this.speed) % span) - this.radius;
-    const cy = H / 2 + Math.sin(t * 0.7) * 160;
-    const d = Math.hypot(x - cx, y - cy);
-    const k = d >= this.radius ? 0 : smoothstep(0, this.radius * 0.7, this.radius - d);
-    return { x: this.strength * k, y: 0 };
   }
 }
 
