@@ -44,6 +44,12 @@ export class GameScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keyW!: Phaser.Input.Keyboard.Key;
   private keyS!: Phaser.Input.Keyboard.Key;
+  private isTouch = false;
+  private touchZones?: {
+    top: Phaser.GameObjects.Rectangle;
+    bottom: Phaser.GameObjects.Rectangle;
+    labels: Phaser.GameObjects.Text[];
+  };
 
   constructor() {
     super('Game');
@@ -69,6 +75,9 @@ export class GameScene extends Phaser.Scene {
     // enable it for deep-linked/e2e/debug runs, never in normal play.
     this.debugHook = params.has('seed') || params.has('play') || params.has('debug');
     this.calmMotion = prefersReducedMotion();
+    // Touch controls: on-screen zones for biaxial (Dive / Power Dive) modes.
+    // ?touch=1 forces them on for verification on non-touch devices.
+    this.isTouch = this.game.device.input.touch || params.has('touch');
     const urlSeed = Number(params.get('seed'));
     const seed = urlSeed > 0 ? urlSeed : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
     const pace = Number(params.get('pace')) || Number(this.registry.get('pace')) || 1;
@@ -144,24 +153,27 @@ export class GameScene extends Phaser.Scene {
     });
     this.bubbles.setDepth(9);
 
-    // Idle hint until the first input starts the run.
+    // Idle hint until the first input starts the run — tailored to the device.
+    const hintText = mode.biaxial
+      ? this.isTouch
+        ? 'hold top ▲ to rise\nhold bottom ▼ to dive'
+        : 'rise: top half / left-click / ↑\ndive: bottom half / right-click / ↓'
+      : this.isTouch
+        ? 'tap to swim'
+        : 'tap, click, ↑ or space to swim';
     this.hint = this.add
-      .text(
-        D.worldWidth / 2,
-        D.worldHeight * 0.62,
-        mode.biaxial
-          ? 'rise: top half / left-click / ↑\ndive: bottom half / right-click / ↓'
-          : 'tap, click, ↑ or space to swim',
-        {
-          fontFamily: '"Trebuchet MS", sans-serif',
-          fontSize: mode.biaxial ? '20px' : '24px',
-          color: '#cfe9f2',
-          align: 'center',
-        },
-      )
+      .text(D.worldWidth / 2, D.worldHeight * 0.62, hintText, {
+        fontFamily: '"Trebuchet MS", sans-serif',
+        fontSize: mode.biaxial ? '20px' : '24px',
+        color: '#cfe9f2',
+        align: 'center',
+      })
       .setOrigin(0.5)
       .setDepth(20);
     this.tweens.add({ targets: this.hint, alpha: 0.35, duration: 600, yoyo: true, repeat: -1 });
+
+    // Biaxial touch affordance: labelled rise/dive halves that light on hold.
+    if (mode.biaxial && this.isTouch) this.makeTouchZones();
 
     this.sfx = this.registry.get('sfx') as SfxSynth;
 
@@ -280,7 +292,36 @@ export class GameScene extends Phaser.Scene {
     if (!this.started) {
       this.started = true;
       this.hint?.destroy();
+      // Once the run starts, dim the zone labels (the player has the idea) but
+      // keep the press-feedback fills live.
+      if (this.touchZones) {
+        this.tweens.add({ targets: this.touchZones.labels, alpha: 0.14, duration: 900 });
+      }
     }
+  }
+
+  /**
+   * Touch affordance for biaxial modes: two labelled halves (▲ rise / ▼ dive)
+   * that wash with color while that half is held. Purely visual — input still
+   * flows through pollDiveInput()/sim.setHold(), so the sim is untouched.
+   */
+  private makeTouchZones(): void {
+    const W = D.worldWidth;
+    const H = D.worldHeight;
+    const top = this.add.rectangle(W / 2, H / 4, W, H / 2, 0x9fe8ff, 0).setDepth(15);
+    const bottom = this.add.rectangle(W / 2, (H * 3) / 4, W, H / 2, 0xffcf8a, 0).setDepth(15);
+    this.add.rectangle(W / 2, H / 2, W, 2, 0xbfe6f2, 0.22).setDepth(15);
+    const style = {
+      fontFamily: '"Trebuchet MS", sans-serif',
+      fontSize: '22px',
+      fontStyle: 'bold',
+      color: '#eaf6fb',
+      stroke: '#0a2e3d',
+      strokeThickness: 4,
+    };
+    const up = this.add.text(W / 2, H * 0.16, '▲ RISE', style).setOrigin(0.5).setDepth(16).setAlpha(0.55);
+    const dn = this.add.text(W / 2, H * 0.84, '▼ DIVE', style).setOrigin(0.5).setDepth(16).setAlpha(0.55);
+    this.touchZones = { top, bottom, labels: [up, dn] };
   }
 
   private classicFlap(): void {
@@ -312,6 +353,11 @@ export class GameScene extends Phaser.Scene {
       }
     }
     this.sim.setHold(up, down);
+    // Light the held half so touch players get press feedback.
+    if (this.touchZones) {
+      this.touchZones.top.setFillStyle(0x9fe8ff, up ? 0.16 : 0);
+      this.touchZones.bottom.setFillStyle(0xffcf8a, down ? 0.2 : 0);
+    }
     if ((up || down) && this.sim.frame % 10 === 0) {
       this.bubbles.emitParticleAt(this.player.sprite.x - 26, this.player.sprite.y, 1);
     }
